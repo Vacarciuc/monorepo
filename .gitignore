@@ -1,0 +1,15 @@
+.idea
+tz.txt
+
+# Node modules
+**/node_modules
+
+# Build output
+**/dist
+**/.dist
+
+# Environment files
+**/.env
+
+# Logs
+*.log
