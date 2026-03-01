@@ -1,0 +1,336 @@
+# TASK SPECIFICATION (TZ)
+
+## Event-Driven Marketplace Platform (Monorepo Architecture)
+
+---
+
+# 1. Obiectiv General
+
+Implementarea unei aplicații distribuite de tip marketplace, bazată pe microservicii, care utilizează comunicare asincronă prin RabbitMQ, autentificare JWT și arhitectură monorepo.
+
+Sistemul trebuie să permită:
+
+* Autentificare utilizatori (Customer / Seller)
+* Adăugare produse în coș
+* Plasare comandă
+* Procesare asincronă a comenzii
+* Confirmare / respingere comandă de către Seller
+* Vizualizare status comandă
+* Testare completă (Unit, Integration, E2E)
+* Dockerizare completă
+* CI/CD funcțional
+
+---
+
+# 2. Arhitectură Generală
+
+## 2.1 Monorepo Structure
+
+marketplace/
+apps/
+auth-service/
+order-service/
+seller-service/
+frontend/
+libs/
+common/
+events/
+dto/
+enums/
+guards/
+docker-compose.yml
+.github/workflows/
+
+## 2.2 Microservicii
+
+### 1. Auth Service
+
+Responsabilități:
+
+* Register
+* Login
+* Generare JWT
+* Returnare rol (CUSTOMER / SELLER)
+
+Database: auth_db
+
+Endpoint-uri:
+
+* POST /auth/register
+* POST /auth/login
+
+JWT payload:
+
+* userId
+* role
+
+---
+
+### 2. Order Service
+
+Responsabilități:
+
+* CRUD produse
+* Gestionare coș
+* Creare comandă
+* Verificare stoc
+* Emitere eveniment OrderCreated
+* Actualizare status comandă
+
+Database: order_db
+
+Endpoint-uri:
+
+* GET /products
+* POST /cart
+* GET /cart
+* POST /orders
+* GET /orders/:id
+
+---
+
+### 3. Seller Service
+
+Responsabilități:
+
+* Consumă OrderCreated din RabbitMQ
+* Confirmă sau respinge comanda
+* Emite OrderProcessed event
+
+Database: seller_db
+
+Endpoint-uri (pentru Postman):
+
+* POST /seller/orders/:id/confirm
+* POST /seller/orders/:id/reject
+
+---
+
+# 3. RabbitMQ Configuration
+
+Exchange: order.exchange
+
+Queues:
+
+* seller.{sellerId}.queue
+* order.status.queue
+
+Evenimente:
+
+OrderCreatedEvent
+
+* orderId
+* sellerId
+* items
+* totalPrice
+
+OrderProcessedEvent
+
+* orderId
+* status (CONFIRMED / REJECTED)
+
+Regulă:
+Microserviciile NU comunică direct prin DB.
+Comunicarea este exclusiv prin evenimente.
+
+---
+
+# 4. Modelare Bază de Date
+
+## Auth DB
+
+users:
+
+* id
+* email
+* password_hash
+* role
+
+---
+
+## Order DB
+
+products:
+
+* id
+* name
+* price
+* stock
+* seller_id
+
+cart_items:
+
+* id
+* user_id
+* product_id
+* quantity
+
+orders:
+
+* id
+* user_id
+* seller_id
+* total_price
+* status (PENDING, CONFIRMED, REJECTED)
+
+order_items:
+
+* id
+* order_id
+* product_id
+* quantity
+* price
+
+---
+
+## Seller DB
+
+seller_orders:
+
+* id
+* order_id
+* status
+* processed_at
+
+---
+
+# 5. Flux Principal Event-Driven (E2E)
+
+1. Customer login → primește JWT
+2. Customer adaugă produse în coș
+3. POST /orders
+4. Order Service:
+
+   * verifică stoc
+   * creează comandă cu status PENDING
+   * publică OrderCreatedEvent
+5. Seller Service consumă evenimentul
+6. Seller confirmă sau respinge
+7. Seller Service publică OrderProcessedEvent
+8. Order Service actualizează status
+9. Customer verifică status
+
+---
+
+# 6. Autentificare și Autorizare
+
+* JWT-based authentication
+* Middleware pentru validare token
+* Role-based access control
+
+Reguli:
+
+* CUSTOMER poate crea comenzi
+* SELLER poate procesa comenzi
+
+---
+
+# 7. Frontend (React)
+
+Pagini:
+
+1. Products Page
+
+   * listă produse
+   * add to cart
+
+2. Cart Page
+
+   * vizualizare produse
+   * place order
+
+Autentificare simplă cu JWT stocat în memory/local storage.
+
+Nu este necesar UI pentru seller.
+
+---
+
+# 8. Testare
+
+## 8.1 Unit Tests
+
+* Auth logic
+* Order total calculation
+* Stock validation
+* Status transitions
+
+## 8.2 Integration Tests
+
+* Endpoint-uri REST
+* Interacțiune DB
+
+## 8.3 E2E Test
+
+Scenariu complet:
+
+* Login
+* Add to cart
+* Place order
+* Simulare confirmare
+* Verificare status final
+
+---
+
+# 9. Dockerizare
+
+Fiecare serviciu trebuie să conțină:
+
+* Dockerfile
+
+Docker Compose trebuie să includă:
+
+* auth-service
+* order-service
+* seller-service
+* frontend
+* rabbitmq
+* 3 instanțe PostgreSQL
+
+---
+
+# 10. CI/CD
+
+CI:
+
+* Install
+* Build
+* Run unit tests
+* Run integration tests
+
+CD:
+
+* Build Docker images
+* Deploy în cloud (manual sau automat)
+
+Tool recomandat: GitHub Actions
+
+---
+
+# 11. Cerințe Minime Finale
+
+✔ Monorepo
+✔ Minim 2 microservicii
+✔ RabbitMQ funcțional
+✔ Flux asincron complet
+✔ JWT authentication
+✔ UI minimal
+✔ Unit + Integration + E2E tests
+✔ Docker pentru fiecare serviciu
+✔ Docker Compose complet
+✔ CI/CD funcțional
+✔ Deployment în cloud
+
+---
+
+# 12. Extensii Opționale (pentru nivel avansat)
+
+* Retry mechanism + Dead Letter Queue
+* Audit log
+* Analytics endpoint
+* Roluri multiple suplimentare
+* Monitoring
+* Terraform pentru infrastructură
+
+---
+
+# END OF TASK SPECIFICATION

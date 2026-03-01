@@ -1,0 +1,10 @@
+{
+
+}
+  }
+    "build": "tsc"
+  "scripts": {
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "version": "1.0.0",
+  "name": "@monorepo/common",
