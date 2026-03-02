@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # Auth Service Database
+  auth-db:
+    image: postgres:16-alpine
+    container_name: auth-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Order Service Database
+  order-db:
+    image: postgres:16-alpine
+    container_name: order-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: order_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Seller Service Database
+  seller-db:
+    image: postgres:16-alpine
+    container_name: seller-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: seller_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - seller-db-data:/var/lib/postgresql/data
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./apps/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      NODE_ENV: development
+      DB_HOST: auth-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: auth_db
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      JWT_EXPIRES_IN: 24h
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks:
+      - marketplace-network
+    restart: unless-stopped
+
+volumes:
+  auth-db-data:
+  order-db-data:
+  seller-db-data:
+  rabbitmq-data:
+
+networks:
+  marketplace-network:
+    driver: bridge
+

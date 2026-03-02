@@ -1,0 +1,233 @@
+{
+  "info": {
+    "name": "Marketplace Auth Service",
+    "description": "API collection for testing the Authentication Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Seller",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seller@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"SELLER\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"customer_token\", jsonData.accessToken);",
+                  "pm.environment.set(\"customer_id\", jsonData.userId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Seller",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"seller_token\", jsonData.accessToken);",
+                  "pm.environment.set(\"seller_id\", jsonData.userId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seller@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Invalid Credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Duplicate Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Invalid Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"notanemail\",\n  \"password\": \"password123\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Password Too Short",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"12345\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3001/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3001",
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+
