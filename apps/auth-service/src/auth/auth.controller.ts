@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from '../dto/auth.dto';
 import { AuthResponseDto } from '@monorepo/common';
@@ -6,6 +6,16 @@ import { AuthResponseDto } from '@monorepo/common';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('health')
+  @HttpCode(HttpStatus.OK)
+  health() {
+    return {
+      status: 'ok',
+      service: 'auth-service',
+      timestamp: new Date().toISOString(),
+    };
+  }
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -19,4 +29,6 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 }
+
+
 

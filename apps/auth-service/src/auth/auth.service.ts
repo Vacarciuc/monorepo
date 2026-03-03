@@ -50,7 +50,6 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
-    // Find user by email
     const user = await this.userRepository.findOne({
       where: { email },
     });
@@ -59,14 +58,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate JWT token
     return this.generateToken(user.id, user.role);
   }
 
@@ -81,7 +78,7 @@ export class AuthService {
     };
   }
 
-  async validateUser(userId: string): Promise<User> {
+  async validateUser(userId: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id: userId } });
   }
 }
