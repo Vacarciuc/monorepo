@@ -3,13 +3,19 @@ import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { AuthService } from './auth.service';
-import { User } from '../entities/user.entity';
+import { AuthService } from '../../src/auth/auth.service';
+import { User } from '../../src/entities/user.entity';
 import { UserRole } from '@monorepo/common';
-import { RegisterDto, LoginDto } from '../dto/auth.dto';
+import { RegisterDto, LoginDto } from '../../src/dto/auth.dto';
 
-describe('AuthService', () => {
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(),
+  compare: jest.fn(),
+}));
+
+import * as bcrypt from 'bcrypt';
+
+describe('AuthService - Unit Tests', () => {
   let service: AuthService;
   let userRepository: Repository<User>;
   let jwtService: JwtService;
@@ -68,8 +74,7 @@ describe('AuthService', () => {
       mockUserRepository.create.mockReturnValue(savedUser);
       mockUserRepository.save.mockResolvedValue(savedUser);
       mockJwtService.sign.mockReturnValue('jwt_token');
-
-      jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('hashed_password' as never));
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password');
 
       const result = await service.register(registerDto);
 
@@ -98,6 +103,32 @@ describe('AuthService', () => {
         ConflictException,
       );
     });
+
+    it('should hash password before saving', async () => {
+      const registerDto: RegisterDto = {
+        email: 'test@example.com',
+        password: 'password123',
+        role: UserRole.SELLER,
+      };
+
+      const savedUser = {
+        id: '456',
+        email: registerDto.email,
+        password_hash: 'hashed_password',
+        role: UserRole.SELLER,
+        created_at: new Date(),
+      };
+
+      mockUserRepository.findOne.mockResolvedValue(null);
+      mockUserRepository.create.mockReturnValue(savedUser);
+      mockUserRepository.save.mockResolvedValue(savedUser);
+      mockJwtService.sign.mockReturnValue('jwt_token_seller');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password');
+
+      await service.register(registerDto);
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('password123', 10);
+    });
   });
 
   describe('login', () => {
@@ -117,8 +148,7 @@ describe('AuthService', () => {
 
       mockUserRepository.findOne.mockResolvedValue(user);
       mockJwtService.sign.mockReturnValue('jwt_token');
-
-      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true as never));
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.login(loginDto);
 
@@ -156,7 +186,7 @@ describe('AuthService', () => {
       };
 
       mockUserRepository.findOne.mockResolvedValue(user);
-      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false as never));
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(service.login(loginDto)).rejects.toThrow(
         UnauthorizedException,
@@ -183,6 +213,15 @@ describe('AuthService', () => {
         where: { id: '123' },
       });
     });
+
+    it('should return null when user not found', async () => {
+      mockUserRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.validateUser('999');
+
+      expect(result).toBeNull();
+    });
   });
 });
+
 

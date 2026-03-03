@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthController } from '../../src/auth/auth.controller';
+import { AuthService } from '../../src/auth/auth.service';
 import { UserRole } from '@monorepo/common';
-import { RegisterDto, LoginDto } from '../dto/auth.dto';
+import { RegisterDto, LoginDto } from '../../src/dto/auth.dto';
 
-describe('AuthController', () => {
+describe('AuthController - Unit Tests', () => {
   let controller: AuthController;
   let authService: AuthService;
 
@@ -52,6 +52,28 @@ describe('AuthController', () => {
 
       expect(result).toEqual(expectedResult);
       expect(authService.register).toHaveBeenCalledWith(registerDto);
+      expect(authService.register).toHaveBeenCalledTimes(1);
+    });
+
+    it('should register a seller', async () => {
+      const registerDto: RegisterDto = {
+        email: 'seller@example.com',
+        password: 'password123',
+        role: UserRole.SELLER,
+      };
+
+      const expectedResult = {
+        accessToken: 'jwt_token_seller',
+        userId: '456',
+        role: UserRole.SELLER,
+      };
+
+      mockAuthService.register.mockResolvedValue(expectedResult);
+
+      const result = await controller.register(registerDto);
+
+      expect(result).toEqual(expectedResult);
+      expect(authService.register).toHaveBeenCalledWith(registerDto);
     });
   });
 
@@ -74,6 +96,7 @@ describe('AuthController', () => {
 
       expect(result).toEqual(expectedResult);
       expect(authService.login).toHaveBeenCalledWith(loginDto);
+      expect(authService.login).toHaveBeenCalledTimes(1);
     });
   });
 });
