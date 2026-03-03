@@ -1,5 +1,7 @@
 export * from './dto';
+export * from './dto';
 export * from './enums';
-export * from './guards';
-export * from './decorators';
+// Guards and decorators require @nestjs dependencies
+// export * from './guards';
+// export * from './decorators';
 
