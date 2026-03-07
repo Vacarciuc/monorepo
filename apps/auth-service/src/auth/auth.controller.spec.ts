@@ -1,17 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { UserRole } from '@monorepo/common';
-import { RegisterDto, LoginDto } from '../dto/auth.dto';
+import { Test, TestingModule } from '@nestjs/testing'
+
+import { AuthService } from '@/auth/auth.service'
+import { UserRole } from '@/auth/user-role.enum'
+import { LoginDto } from '@/dto/login.dto'
+import { RegisterDto } from '@/dto/register.dto'
+
+import { AuthController } from './auth.controller'
 
 describe('AuthController', () => {
-  let controller: AuthController;
-  let authService: AuthService;
+  let controller: AuthController
+  let service: AuthService
 
-  const mockAuthService = {
-    register: jest.fn(),
-    login: jest.fn(),
-  };
+  const mockToken = 'mock-jwt-token'
+  const mockDecodedJwt = {
+    sub: '1',
+    email: 'test@test.com',
+    role: UserRole.User,
+  }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -19,62 +24,51 @@ describe('AuthController', () => {
       providers: [
         {
           provide: AuthService,
-          useValue: mockAuthService,
+          useValue: {
+            login: jest.fn().mockResolvedValue(mockToken),
+            register: jest.fn().mockResolvedValue(mockToken),
+            getSelfDto: jest
+              .fn()
+              .mockResolvedValue({ id: 1, email: 'test@test.com' }),
+          },
         },
       ],
-    }).compile();
+    }).compile()
 
-    controller = module.get<AuthController>(AuthController);
-    authService = module.get<AuthService>(AuthService);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('register', () => {
-    it('should call authService.register and return the result', async () => {
-      const registerDto: RegisterDto = {
-        email: 'test@example.com',
-        password: 'password123',
-        role: UserRole.CUSTOMER,
-      };
-
-      const expectedResult = {
-        accessToken: 'jwt_token',
-        userId: '123',
-        role: UserRole.CUSTOMER,
-      };
-
-      mockAuthService.register.mockResolvedValue(expectedResult);
-
-      const result = await controller.register(registerDto);
-
-      expect(result).toEqual(expectedResult);
-      expect(authService.register).toHaveBeenCalledWith(registerDto);
-    });
-  });
+    controller = module.get<AuthController>(AuthController)
+    service = module.get<AuthService>(AuthService)
+  })
 
   describe('login', () => {
-    it('should call authService.login and return the result', async () => {
-      const loginDto: LoginDto = {
-        email: 'test@example.com',
+    it('should return a token string', async () => {
+      const dto: LoginDto = { email: 'test@test.com', password: 'password123' }
+      const result = await controller.login(dto)
+
+      expect(result).toBe(mockToken)
+      expect(service.login).toHaveBeenCalledWith(dto)
+    })
+  })
+
+  describe('register', () => {
+    it('should register a user and return a token', async () => {
+      const dto: RegisterDto = {
+        email: 'new@test.com',
+        username: 'newuser',
         password: 'password123',
-      };
+      }
+      const result = await controller.register(dto)
 
-      const expectedResult = {
-        accessToken: 'jwt_token',
-        userId: '123',
-        role: UserRole.CUSTOMER,
-      };
+      expect(result).toBe(mockToken)
+      expect(service.register).toHaveBeenCalledWith(dto)
+    })
+  })
 
-      mockAuthService.login.mockResolvedValue(expectedResult);
+  describe('getSelf', () => {
+    it('should return the self DTO based on the request token', async () => {
+      const result = await controller.getSelf(mockDecodedJwt as any)
 
-      const result = await controller.login(loginDto);
-
-      expect(result).toEqual(expectedResult);
-      expect(authService.login).toHaveBeenCalledWith(loginDto);
-    });
-  });
-});
-
+      expect(result).toEqual({ id: 1, email: 'test@test.com' })
+      expect(service.getSelfDto).toHaveBeenCalledWith(mockDecodedJwt)
+    })
+  })
+})
