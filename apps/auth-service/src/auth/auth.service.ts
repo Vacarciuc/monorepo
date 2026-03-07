@@ -1,88 +1,149 @@
 import {
-  Injectable,
   ConflictException,
+  Injectable,
+  NotFoundException,
   UnauthorizedException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { User } from '../entities/user.entity';
-import { RegisterDto, LoginDto } from '../dto/auth.dto';
-import { AuthResponseDto, UserRole } from '@monorepo/common';
+} from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { JwtService, JwtSignOptions, JwtVerifyOptions } from '@nestjs/jwt'
+import { InjectRepository } from '@nestjs/typeorm'
+import { plainToInstance } from 'class-transformer'
+import { FindOneOptions, Repository } from 'typeorm'
+
+import { UserRole } from '@/auth/user-role.enum'
+import { CryptoService } from '@/crypto/crypto.service'
+import { GetSelfDto } from '@/dto/get-self.dto'
+import { LoginDto } from '@/dto/login.dto'
+import { RegisterDto } from '@/dto/register.dto'
+import { User } from '@/entities'
+import { AppEnv } from '@/types/app-env.types'
+
+import { DecodedJwt } from './auth.types'
 
 @Injectable()
 export class AuthService {
+  private readonly signOptions: JwtSignOptions
+  private readonly verifyOptions: JwtVerifyOptions
+
   constructor(
+    private readonly jwtService: JwtService,
+    private readonly config: ConfigService<AppEnv>,
+    private readonly cryptoService: CryptoService,
     @InjectRepository(User)
-    private userRepository: Repository<User>,
-    private jwtService: JwtService,
-  ) {}
+    private readonly userRepo: Repository<TypeRef<User>>,
+  ) {
+    const aud = this.config.get('JWT_AUD')
 
-  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { email, password, role } = registerDto;
-
-    // Check if user already exists
-    const existingUser = await this.userRepository.findOne({
-      where: { email },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+    this.signOptions = {
+      secret: config.get('JWT_SECRET'),
+      expiresIn: config.get('JWT_TTL'),
+      audience: aud,
+      encoding: 'utf-8',
+      algorithm: 'HS256',
+      allowInsecureKeySizes: false,
     }
 
-    // Hash password
-    const password_hash = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = this.userRepository.create({
-      email,
-      password_hash,
-      role,
-    });
-
-    await this.userRepository.save(user);
-
-    // Generate JWT token
-    return this.generateToken(user.id, user.role);
+    this.verifyOptions = {
+      secret: this.config.get('JWT_SECRET'),
+      audience: Array.isArray(aud) ? aud[0] : aud,
+      algorithms: ['HS256'],
+    }
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const { email, password } = loginDto;
+  checkPassword(user: User, password: string): Promise<boolean> {
+    return this.cryptoService.hashCompare(password, user.password)
+  }
 
-    // Find user by email
-    const user = await this.userRepository.findOne({
-      where: { email },
-    });
+  async createToken(user: User): Promise<string> {
+    const payload = {
+      sub: user.id.toString(),
+      email: user.email,
+      role: user.role,
+    }
+    return this.jwtService.signAsync(payload, this.signOptions)
+  }
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+  findOneById(
+    id: number,
+    relations?: FindOneOptions<User>['relations'],
+  ): Promise<User | null> {
+    return this.userRepo.findOne({ where: { id }, relations })
+  }
+
+  async getAuthenticated(
+    decoded: DecodedJwt,
+    relations?: FindOneOptions<User>['relations'],
+  ): Promise<User> {
+    const id = parseInt(decoded.sub as any)
+    return (await this.findOneById(id, relations))!
+  }
+
+  async validateToken(token: string): Promise<DecodedJwt | null> {
+    try {
+      return this.jwtService.verifyAsync<DecodedJwt>(token, this.verifyOptions)
+    } catch (err) {
+      return null
+    }
+  }
+
+  async getSelfDto(jwt: DecodedJwt): Promise<GetSelfDto> {
+    const user = await this.getAuthenticated(jwt, {})
+
+    return plainToInstance(GetSelfDto, user)
+  }
+
+  async exists(id: number): Promise<boolean> {
+    return this.userRepo.existsBy({ id })
+  }
+
+  async existsEmail(email: string): Promise<boolean> {
+    return this.userRepo.existsBy({ email })
+  }
+
+  async register(dto: RegisterDto): Promise<string> {
+    const exists = await this.existsEmail(dto.email)
+
+    if (exists) {
+      throw new ConflictException()
     }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    const user = await this.create(dto)
+    const token = await this.createToken(user)
+    return token
+  }
 
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+  getOneByEmail(
+    email: string,
+    relations?: FindOneOptions<User>['relations'],
+  ): Promise<User | null> {
+    return this.userRepo.findOne({ where: { email }, relations })
+  }
+
+  async login(dto: LoginDto): Promise<string> {
+    const user = await this.getOneByEmail(dto.email)
+
+    if (user === null) {
+      throw new NotFoundException()
     }
 
-    // Generate JWT token
-    return this.generateToken(user.id, user.role);
+    const passwordCorrect = await this.checkPassword(user, dto.password)
+
+    if (!passwordCorrect) {
+      throw new UnauthorizedException()
+    }
+
+    return this.createToken(user)
   }
 
-  private generateToken(userId: string, role: UserRole): AuthResponseDto {
-    const payload = { userId, role };
-    const accessToken = this.jwtService.sign(payload);
+  async create(dto: RegisterDto): Promise<User> {
+    const user = new User()
 
-    return {
-      accessToken,
-      userId,
-      role,
-    };
-  }
+    user.email = dto.email
+    user.username = dto.username
+    user.password = await this.cryptoService.hash(dto.password)
+    user.createdAt = new Date()
+    user.role = UserRole.User
 
-  async validateUser(userId: string): Promise<User> {
-    return this.userRepository.findOne({ where: { id: userId } });
+    return this.userRepo.save(user)
   }
 }
-
