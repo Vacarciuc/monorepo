@@ -1,31 +1,43 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
-import { User } from './entities/user.entity';
+import { Module, ValidationPipe } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { ScheduleModule } from '@nestjs/schedule'
+import { ServeStaticModule } from '@nestjs/serve-static'
+import { TypeOrmModule } from '@nestjs/typeorm'
+
+import { AuthGuard } from '@/auth/auth.guard'
+import { ENV_CONFIG } from '@/config/env.config'
+import { GLOBAL_VALIDATION_PIPE_CONFIG } from '@/config/global-validation-pipe.config'
+import { SCHEDULE_CONFIG } from '@/config/schedule.config'
+import { SERVE_STATIC_CONFIG } from '@/config/serve-static.config'
+import { TYPEORM_CONFIG } from '@/config/typeorm.config'
+import { LoggingInterceptor } from '@/interceptors/logging.interceptor'
+
+import { AuthModule } from './auth/auth.module'
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST', 'localhost'),
-        port: configService.get('DB_PORT', 5432),
-        username: configService.get('DB_USERNAME', 'postgres'),
-        password: configService.get('DB_PASSWORD', 'postgres'),
-        database: configService.get('DB_DATABASE', 'auth_db'),
-        entities: [User],
-        synchronize: configService.get('NODE_ENV') !== 'production',
-      }),
-      inject: [ConfigService],
-    }),
+    ConfigModule.forRoot(ENV_CONFIG),
+    TypeOrmModule.forRootAsync(TYPEORM_CONFIG),
+    ServeStaticModule.forRootAsync(SERVE_STATIC_CONFIG),
+    ScheduleModule.forRoot(SCHEDULE_CONFIG),
     AuthModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_PIPE,
+      useValue: new ValidationPipe(GLOBAL_VALIDATION_PIPE_CONFIG),
+    },
+  ],
+  exports: [],
 })
 export class AppModule {}

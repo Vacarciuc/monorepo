@@ -1,39 +1,22 @@
-# Build stage
-FROM node:20-alpine AS builder
-
+FROM node:24-slim AS base
 WORKDIR /app
+RUN npm i -g corepack
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
 
-# Copy package files
-COPY package*.json ./
-COPY tsconfig*.json ./
-COPY nest-cli.json ./
+FROM base AS builder
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm fetch --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
-# Install dependencies
-RUN npm ci
+COPY . .
+RUN pnpm build
 
-# Copy source code
-COPY src ./src
+FROM base AS production
+RUN apt-get -y update && apt-get -y install curl
 
-# Build the application
-RUN npm run build
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm fetch --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile --prod
 
-# Production stage
-FROM node:20-alpine
+COPY --from=builder /app/dist/ dist/
 
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install production dependencies only
-RUN npm ci --only=production
-
-# Copy built application from builder
-COPY --from=builder /app/dist ./dist
-
-# Expose port
-EXPOSE 3001
-
-# Start the application
-CMD ["node", "dist/main"]
-
+ENTRYPOINT ["pnpm", "start:prod"]
