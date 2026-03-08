@@ -27,7 +27,6 @@ jobs:
           cache: 'pnpm'
 
       - name: Install Dependencies
-        working-directory: apps/auth-service
         run: pnpm install --frozen-lockfile
 
       - name: Run Tests
