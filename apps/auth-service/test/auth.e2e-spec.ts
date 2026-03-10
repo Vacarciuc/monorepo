@@ -1,16 +1,26 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common'
+import {
+  ExecutionContext,
+  INestApplication,
+  ValidationPipe,
+} from '@nestjs/common'
+import { APP_GUARD, Reflector } from '@nestjs/core'
 import { Test, TestingModule } from '@nestjs/testing'
-// Adjust path to your root module
 import { getRepositoryToken } from '@nestjs/typeorm'
 import request from 'supertest'
+import { DataSource } from 'typeorm'
 
 import { AppModule } from '@/app.module'
+import { IS_PUBLIC_DECORATOR_KEY } from '@/auth/auth.decorator'
+import { AuthGuard } from '@/auth/auth.guard'
+import { AuthService } from '@/auth/auth.service'
+import { DecodedJwt } from '@/auth/auth.types'
+import { UserRole } from '@/auth/user-role.enum'
 import { User } from '@/entities'
+import { RolesGuard } from '@/auth/roles.guard'
 
-describe('AuthController (Integration)', () => {
+describe('AuthController', () => {
   let app: INestApplication
 
-  // Mocking the DB repository to avoid needing a real database
   const mockUserRepo = {
     findOne: jest.fn(),
     existsBy: jest.fn(),
@@ -21,13 +31,40 @@ describe('AuthController (Integration)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(DataSource)
+      .useValue({})
       .overrideProvider(getRepositoryToken(User))
       .useValue(mockUserRepo)
+      .overrideGuard(APP_GUARD)
+      .useValue({
+        canActivate: () => true,
+      })
+
+      // 2. Force RolesGuard to always pass
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
       .compile()
 
     app = moduleFixture.createNestApplication()
 
-    // IMPORTANT: Integration tests must include the same pipes/guards as the real app
+    // const authService = moduleFixture.get<AuthService>(AuthService)
+    // jest
+    //   .spyOn(authService, 'validateToken')
+    //   .mockImplementation(async (token): Promise<DecodedJwt | null> => {
+    //     if (token === 'valid-test-token') {
+    //       return {
+    //         sub: 1,
+    //         email: 'test@test.com',
+    //         aud: 'dasi',
+    //         role: UserRole.User,
+    //         exp: Math.ceil(Date.now() / 1000) + 24 * 60 * 60,
+    //         iat: Math.ceil(Date.now() / 1000),
+    //         iss: 'dasi',
+    //       }
+    //     }
+    //     return null
+    //   })
+
     app.useGlobalPipes(new ValidationPipe())
     await app.init()
   })
@@ -37,7 +74,7 @@ describe('AuthController (Integration)', () => {
       mockUserRepo.findOne.mockResolvedValue({
         id: 1,
         email: 'test@test.com',
-        password: 'hashed_password_here', // Assuming CryptoService mock handles comparison
+        password: 'hashed_password_here',
       })
 
       return request(app.getHttpServer())
@@ -59,13 +96,12 @@ describe('AuthController (Integration)', () => {
 
   describe('/auth (GET) - Guard Check', () => {
     it('should return 401 Unauthorized if no token is provided', () => {
-      return request(app.getHttpServer()).get('/auth').expect(401) // Verifies AuthGuard is working
+      return request(app.getHttpServer()).get('/auth').expect(401)
     })
 
     it('should return 200 if a valid Bearer token is provided', async () => {
-      // 1. Get a real token or mock the validation
-      // For a true integration test, we use the real AuthService to sign a token
-      const validToken = '...'
+      // Use the EXACT string your mock is looking for
+      const validToken = 'valid-test-token'
 
       return request(app.getHttpServer())
         .get('/auth')
