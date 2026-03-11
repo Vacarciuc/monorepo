@@ -22,5 +22,24 @@ jobs:
           service_account: github-deployer@market-place-489716.iam.gserviceaccount.com
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
-      - name: Use gcloud CLI
-        run: 'gcloud info'
+      - name: Docker Auth
+        run: |-
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+      - name: Build and Push Container
+        run: |-
+          docker build -t us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }} .
+          docker push us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
+      - name: Deploy to GCE
+        run: |-
+          gcloud compute ssh auth-service \
+            --zone="europe-west10-c" \
+            --project="market-place-489716" \
+            --command="
+              gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          
+              docker pull us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
+          
+              docker stop my-app-container || true
+              docker rm my-app-container || true
+              docker run -d --name my-app-container -p 80:80 us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
+            "
