@@ -26,6 +26,7 @@ jobs:
         run: |-
           gcloud auth configure-docker us-central1-docker.pkg.dev
       - name: Build and Push Container
+        working-directory: apps/auth-service
         run: |-
           docker build -t us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }} .
           docker push us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
