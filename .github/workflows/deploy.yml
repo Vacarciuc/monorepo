@@ -1,0 +1,22 @@
+name: deploy.yml
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Auth to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/1022630044535/locations/global/workloadIdentityPools/github/providers/github
+          service_account: github-deployer@market-place-489716.iam.gserviceaccount.com
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+      - name: Use gcloud CLI
+        run: 'gcloud info'

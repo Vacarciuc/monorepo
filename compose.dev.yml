@@ -19,7 +19,7 @@ services:
     build:
       context: ./apps/auth-service
       dockerfile: Dockerfile
-    env_file: [./apps/auth-service/.env.development]
+    env_file: [ ./apps/auth-service/.env.development ]
     init: true
     ports:
       - "3001:3000"
@@ -35,8 +35,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${MQ_USER}
       RABBITMQ_DEFAULT_PASS: ${MQ_PASS}
-    volumes: [rabbitmq-data:/var/lib/rabbitmq]
-    networks: [marketplace-network]
+    volumes: [ rabbitmq-data:/var/lib/rabbitmq ]
+    networks: [ marketplace-network ]
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
       interval: 10s
@@ -45,8 +45,6 @@ services:
 
 volumes:
   auth-db-data:
-  order-db-data:
-  seller-db-data:
   rabbitmq-data:
 
 networks:
