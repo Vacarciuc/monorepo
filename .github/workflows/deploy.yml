@@ -24,7 +24,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v3
       - name: Docker Auth
         run: |-
-          gcloud auth configure-docker europe-west10-c-docker.pkg.dev
+          gcloud auth configure-docker europe-west10-docker.pkg.dev
       - name: Build and Push Container
         working-directory: apps/auth-service
         run: |-
@@ -36,7 +36,7 @@ jobs:
             --zone="europe-west10-c" \
             --project="market-place-489716" \
             --command="
-              gcloud auth configure-docker europe-west10-c-docker.pkg.dev --quiet
+              gcloud auth configure-docker europe-west10-docker.pkg.dev --quiet
           
               docker pull europe-west10-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
           
