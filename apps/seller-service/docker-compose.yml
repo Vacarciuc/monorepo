@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  seller-postgres:
+    image: postgres:15-alpine
+    container_name: seller-service-db
+    environment:
+      POSTGRES_DB: seller_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - seller-db-data:/var/lib/postgresql/data
+    networks:
+      - seller-network
+
+  seller-rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: seller-service-rabbitmq
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - seller-rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - seller-network
+
+volumes:
+  seller-db-data:
+  seller-rabbitmq-data:
+
+networks:
+  seller-network:
+    driver: bridge
+
