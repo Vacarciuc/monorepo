@@ -24,23 +24,23 @@ jobs:
         uses: google-github-actions/setup-gcloud@v3
       - name: Docker Auth
         run: |-
-          gcloud auth configure-docker us-central1-docker.pkg.dev
+          gcloud auth configure-docker europe-west10-c-docker.pkg.dev
       - name: Build and Push Container
         working-directory: apps/auth-service
         run: |-
-          docker build -t us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }} .
-          docker push us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
+          docker build -t europe-west10-c-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }} .
+          docker push europe-west10-c-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
       - name: Deploy to GCE
         run: |-
           gcloud compute ssh auth-service \
             --zone="europe-west10-c" \
             --project="market-place-489716" \
             --command="
-              gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+              gcloud auth configure-docker europe-west10-c-docker.pkg.dev --quiet
           
-              docker pull us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
+              docker pull europe-west10-c-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
           
               docker stop my-app-container || true
               docker rm my-app-container || true
-              docker run -d --name my-app-container -p 80:80 us-central1-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
+              docker run -d --name my-app-container -p 80:80 europe-west10-c-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
             "
