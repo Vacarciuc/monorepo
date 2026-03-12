@@ -44,7 +44,11 @@ class App {
   }
 
   private setupInternalConfig() {
-    this.nestApp.use(helmet())
+    this.nestApp.use(
+      helmet({
+        hsts: false,
+      }),
+    )
     this.nestApp.enableCors({
       origin: this.config.get('CORS_ORIGIN')!.split(','),
       allowedHeaders: this.config.get('CORS_HEADERS')!.split(','),
