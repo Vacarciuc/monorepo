@@ -48,9 +48,11 @@ class App {
       helmet({
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         hsts: false,
-        contentSecurityPolicy: false,
-        // @ts-ignore
-        'upgrade-insecure-requests': null,
+        contentSecurityPolicy: {
+          directives: {
+            upgradeInsecureRequests: null,
+          },
+        },
       }),
     )
     this.nestApp.enableCors({
