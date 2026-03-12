@@ -67,7 +67,7 @@ jobs:
           
               docker stop auth-service || true
               docker rm auth-service || true
-              docker run -d --name auth-service -p 3000:3000 \
+              docker run -d --name auth-service -p 3000:3000 --network host \
                 -e NODE_ENV="$NODE_ENV" \
                 -e DB_HOST="$DB_HOST" \
                 -e DB_NAME="$DB_NAME" \
