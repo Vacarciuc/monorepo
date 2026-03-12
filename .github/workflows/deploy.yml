@@ -39,7 +39,7 @@ jobs:
       - name: Set Environment variables
         run: |-
           get_env () {
-            gcloud secrets versions access latest --secret "$0"
+            gcloud secrets versions access latest --secret "$1"
           }
 
           NODE_ENV=$(get_env NODE_ENV)
