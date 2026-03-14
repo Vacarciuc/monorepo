@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { setupSwagger } from './infrastructure/config/swagger.config';
+import { setupSwagger } from './config/swagger.config';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
   // Enable validation
@@ -16,16 +17,21 @@ async function bootstrap() {
   );
 
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    origin: '*',
+    allowedMethods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
-  // Setup Swagger
+  // Setup Swagger documentation
   setupSwagger(app);
 
-  const port = process.env.PORT || 3002;
+  const port = process.env.PORT || 3003;
   await app.listen(port);
 
-  console.log(`🚀 Seller Service running on: http://localhost:${port}`);
-  console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
+  logger.log(`🚀 Seller Service running on: http://localhost:${port}`);
+  logger.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
+  logger.log(`📦 RabbitMQ consumer active and listening for order events`);
 }
 
 bootstrap();
