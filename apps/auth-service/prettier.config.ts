@@ -1,8 +1,7 @@
-/** @type {
- *   import('prettier').Config
- *   & import('@trivago/prettier-plugin-sort-imports').PrettierConfig
- * } */
-const config = {
+import type {Config} from 'prettier'
+import type {PrettierConfig} from '@trivago/prettier-plugin-sort-imports'
+
+const config: Config & PrettierConfig = {
   singleQuote: true,
   semi: false,
   jsxSingleQuote: false,
