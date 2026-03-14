@@ -27,6 +27,16 @@ services:
       - auth-db
     networks: [ marketplace-network ]
 
+  gateway:
+    build:
+      context: ./apps/gateway
+      dockerfile: Dockerfile.development
+    env_file: [ ./apps/gateway/.env.development ]
+    init: true
+    ports:
+      - "3000:3000"
+    networks: [ marketplace-network ]
+
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     ports:

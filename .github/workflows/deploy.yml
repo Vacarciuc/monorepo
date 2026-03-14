@@ -28,12 +28,6 @@ jobs:
       - name: Build and Push Container
         working-directory: apps/auth-service
         run: |-
-          get_env () {
-            gcloud secrets versions access latest --secret="$1"
-          }
-          
-          NODE_ENV=$(get_env NODE_ENV)
-          
           docker build -t europe-west10-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }} .
           docker push europe-west10-docker.pkg.dev/market-place-489716/monorepo/auth-service:${{ github.sha }}
       - name: Deploy to GCE
