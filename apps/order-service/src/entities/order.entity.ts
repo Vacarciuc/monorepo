@@ -3,9 +3,17 @@ import { OrderItem } from './order-item.entity';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
+  CANCELLED = 'CANCELLED',
+  AWAITING_PAYMENT = 'AWAITING_PAYMENT',
+  PAID = 'PAID',
   CONFIRMED = 'CONFIRMED',
   REJECTED = 'REJECTED',
 }
+
+const moneyToCentsTransformer = {
+  to: (value: number) => Math.round(value * 100),
+  from: (value: string | number) => Number(value) / 100,
+};
 
 @Entity('orders')
 export class Order {
@@ -18,7 +26,8 @@ export class Order {
   @Column('uuid')
   seller_id: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  // Stored as integer cents in DB to avoid decimal/string issues.
+  @Column('int', { name: 'total_price_cents', transformer: moneyToCentsTransformer })
   total_price: number;
 
   @Column({

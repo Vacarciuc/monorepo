@@ -1,5 +1,10 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
+const moneyToCentsTransformer = {
+  to: (value: number) => Math.round(value * 100),
+  from: (value: string | number) => Number(value) / 100,
+};
+
 @Entity('products')
 export class Product {
   @PrimaryGeneratedColumn('uuid')
@@ -8,7 +13,8 @@ export class Product {
   @Column()
   name: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  // Stored as integer cents in DB to avoid decimal/string issues.
+  @Column('int', { name: 'price_cents', transformer: moneyToCentsTransformer })
   price: number;
 
   @Column('int')

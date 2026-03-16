@@ -9,6 +9,8 @@ import { Product } from './entities/product.entity';
 import { CartItem } from './entities/cart-item.entity';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
+import { OutboxEvent } from './entities/outbox-event.entity';
+import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { OrderItem } from './entities/order-item.entity';
         username: configService.get('DB_USERNAME', 'postgres'),
         password: configService.get('DB_PASSWORD', 'postgres'),
         database: configService.get('DB_DATABASE', 'order_db'),
-        entities: [Product, CartItem, Order, OrderItem],
+        entities: [Product, CartItem, Order, OrderItem, OutboxEvent],
         synchronize: configService.get('NODE_ENV') !== 'production',
       }),
       inject: [ConfigService],
@@ -43,6 +45,7 @@ import { OrderItem } from './entities/order-item.entity';
     ProductsModule,
     CartModule,
     OrdersModule,
+    RabbitMQModule,
   ],
 })
 export class AppModule {}
