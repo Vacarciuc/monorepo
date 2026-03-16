@@ -1,0 +1,349 @@
+{
+  "info": {
+    "name": "Products API - Seller Service",
+    "description": "API pentru gestionarea produselor cu upload de imagini",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Product",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "name",
+              "value": "Laptop Dell XPS 13",
+              "description": "Numele produsului (required)",
+              "type": "text"
+            },
+            {
+              "key": "description",
+              "value": "High-performance laptop with Intel Core i7 processor",
+              "description": "Descrierea produsului (optional)",
+              "type": "text"
+            },
+            {
+              "key": "price",
+              "value": "1299.99",
+              "description": "Prețul produsului (required, >= 0)",
+              "type": "text"
+            },
+            {
+              "key": "sellerId",
+              "value": "00000000-0000-0000-0000-000000000001",
+              "description": "ID-ul vânzătorului (optional)",
+              "type": "text",
+              "disabled": true
+            },
+            {
+              "key": "image",
+              "description": "Fișier imagine (optional, max 10MB, jpg/jpeg/png/gif/webp)",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:3003/products",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3003",
+          "path": ["products"]
+        },
+        "description": "Creează un produs nou cu imagine opțională. Imaginea primește automat un UUID ca nume."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:3003/products",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3003",
+              "path": ["products"]
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"name\": \"Laptop Dell XPS 13\",\n  \"description\": \"High-performance laptop with Intel Core i7 processor\",\n  \"price\": \"1299.99\",\n  \"imagePath\": \"/uploads/products/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png\",\n  \"sellerId\": \"00000000-0000-0000-0000-000000000001\",\n  \"createdAt\": \"2026-03-16T10:30:00.000Z\",\n  \"updatedAt\": \"2026-03-16T10:30:00.000Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Get All Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3003/products",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3003",
+          "path": ["products"]
+        },
+        "description": "Obține lista tuturor produselor, sortate descrescător după data creării."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3003/products",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3003",
+              "path": ["products"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"name\": \"Laptop Dell XPS 13\",\n    \"description\": \"High-performance laptop\",\n    \"price\": \"1299.99\",\n    \"imagePath\": \"/uploads/products/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png\",\n    \"sellerId\": \"00000000-0000-0000-0000-000000000001\",\n    \"createdAt\": \"2026-03-16T10:30:00.000Z\",\n    \"updatedAt\": \"2026-03-16T10:30:00.000Z\"\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "Get Product by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3003/products/:id",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3003",
+          "path": ["products", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "550e8400-e29b-41d4-a716-446655440000",
+              "description": "UUID-ul produsului"
+            }
+          ]
+        },
+        "description": "Obține un produs specific după ID-ul său UUID."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3003/products/550e8400-e29b-41d4-a716-446655440000",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3003",
+              "path": ["products", "550e8400-e29b-41d4-a716-446655440000"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"name\": \"Laptop Dell XPS 13\",\n  \"description\": \"High-performance laptop\",\n  \"price\": \"1299.99\",\n  \"imagePath\": \"/uploads/products/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png\",\n  \"sellerId\": \"00000000-0000-0000-0000-000000000001\",\n  \"createdAt\": \"2026-03-16T10:30:00.000Z\",\n  \"updatedAt\": \"2026-03-16T10:30:00.000Z\"\n}"
+        },
+        {
+          "name": "Not Found",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3003/products/invalid-id",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3003",
+              "path": ["products", "invalid-id"]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Product with id 550e8400-e29b-41d4-a716-446655440000 not found\",\n  \"error\": \"Not Found\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Update Product",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "name",
+              "value": "Laptop Dell XPS 15",
+              "description": "Nume actualizat (optional)",
+              "type": "text"
+            },
+            {
+              "key": "description",
+              "value": "Updated high-performance laptop",
+              "description": "Descriere actualizată (optional)",
+              "type": "text"
+            },
+            {
+              "key": "price",
+              "value": "1499.99",
+              "description": "Preț actualizat (optional)",
+              "type": "text"
+            },
+            {
+              "key": "image",
+              "description": "Imagine nouă (optional, max 10MB). Imaginea veche se șterge automat.",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:3003/products/:id",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3003",
+          "path": ["products", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "550e8400-e29b-41d4-a716-446655440000",
+              "description": "UUID-ul produsului"
+            }
+          ]
+        },
+        "description": "Actualizează un produs existent. Toate câmpurile sunt opționale. Imaginea veche este ștearsă automat dacă se încarcă una nouă."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "PUT",
+            "url": {
+              "raw": "http://localhost:3003/products/550e8400-e29b-41d4-a716-446655440000",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3003",
+              "path": ["products", "550e8400-e29b-41d4-a716-446655440000"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"name\": \"Laptop Dell XPS 15\",\n  \"description\": \"Updated high-performance laptop\",\n  \"price\": \"1499.99\",\n  \"imagePath\": \"/uploads/products/b2c3d4e5-f6a7-8901-bcde-f12345678901.png\",\n  \"sellerId\": \"00000000-0000-0000-0000-000000000001\",\n  \"createdAt\": \"2026-03-16T10:30:00.000Z\",\n  \"updatedAt\": \"2026-03-16T11:45:00.000Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Delete Product",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3003/products/:id",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3003",
+          "path": ["products", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "550e8400-e29b-41d4-a716-446655440000",
+              "description": "UUID-ul produsului"
+            }
+          ]
+        },
+        "description": "Șterge un produs și imaginea asociată de pe disc."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:3003/products/550e8400-e29b-41d4-a716-446655440000",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3003",
+              "path": ["products", "550e8400-e29b-41d4-a716-446655440000"]
+            }
+          },
+          "status": "No Content",
+          "code": 204,
+          "_postman_previewlanguage": "plain",
+          "header": [],
+          "body": ""
+        }
+      ]
+    },
+    {
+      "name": "Access Product Image",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3003/uploads/products/:filename",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3003",
+          "path": ["uploads", "products", ":filename"],
+          "variable": [
+            {
+              "key": "filename",
+              "value": "550e8400-e29b-41d4-a716-446655440000.png",
+              "description": "Numele fișierului (UUID + extensie)"
+            }
+          ]
+        },
+        "description": "Accesează direct imaginea unui produs. Numele fișierului este în format UUID."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "string"
+    }
+  ]
+}
+

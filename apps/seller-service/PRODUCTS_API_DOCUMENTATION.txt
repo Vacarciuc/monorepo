@@ -1,0 +1,544 @@
+# PRODUCTS API - DOCUMENTAȚIE COMPLETĂ
+
+## Informații Generale
+- Base URL: `http://localhost:3003`
+- Content-Type: `multipart/form-data` (pentru create și update cu imagine)
+- Content-Type: `application/json` (pentru operații fără imagine)
+
+---
+
+## ENDPOINTS
+
+### 1. CREATE PRODUCT (Creare Produs)
+
+**Endpoint:** `POST /products`
+
+**Description:** Creează un produs nou cu imagine opțională. Imaginea este salvată cu UUID ca nume de fișier.
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body:**
+
+| Campo       | Tip     | Obligatoriu | Descriere                                      | Exemplu                                |
+|-------------|---------|-------------|------------------------------------------------|----------------------------------------|
+| name        | string  | Da          | Numele produsului (max 255 caractere)        | "Laptop Dell XPS 13"                   |
+| description | string  | Nu          | Descrierea produsului                          | "High-performance laptop"              |
+| price       | number  | Da          | Prețul produsului (minim 0)                   | 1299.99                                |
+| sellerId    | UUID    | Nu          | ID-ul vânzătorului (default: default seller)  | "223e4567-e89b-12d3-a456-426614174001" |
+| image       | file    | Nu          | Fișier imagine (jpg, jpeg, png, gif, webp)    | laptop.png                             |
+
+**Validări:**
+- Imagine: max 10MB
+- Formate acceptate: jpg, jpeg, png, gif, webp
+- Nume fișier: generat automat cu UUID (ex: `550e8400-e29b-41d4-a716-446655440000.png`)
+- Price: trebuie să fie >= 0
+
+**Response Success (201 Created):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Laptop Dell XPS 13",
+  "description": "High-performance laptop",
+  "price": "1299.99",
+  "imagePath": "/uploads/products/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png",
+  "sellerId": "00000000-0000-0000-0000-000000000001",
+  "createdAt": "2026-03-16T10:30:00.000Z",
+  "updatedAt": "2026-03-16T10:30:00.000Z"
+}
+```
+
+**Response Error (400 Bad Request):**
+```json
+{
+  "statusCode": 400,
+  "message": [
+    "name must be a string",
+    "price must be a positive number"
+  ],
+  "error": "Bad Request"
+}
+```
+
+**cURL Example:**
+```bash
+curl -X POST http://localhost:3003/products \
+  -F "name=Laptop Dell XPS 13" \
+  -F "description=High-performance laptop with Intel Core i7" \
+  -F "price=1299.99" \
+  -F "image=@/path/to/laptop.png"
+```
+
+**cURL Example (fără imagine):**
+```bash
+curl -X POST http://localhost:3003/products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Wireless Mouse",
+    "description": "Ergonomic design",
+    "price": 29.99
+  }'
+```
+
+---
+
+### 2. GET ALL PRODUCTS (Lista Produse)
+
+**Endpoint:** `GET /products`
+
+**Description:** Obține lista tuturor produselor, sortate descrescător după data creării.
+
+**Request Body:** Niciunul
+
+**Query Parameters:** Niciunul
+
+**Response Success (200 OK):**
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Laptop Dell XPS 13",
+    "description": "High-performance laptop",
+    "price": "1299.99",
+    "imagePath": "/uploads/products/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png",
+    "sellerId": "00000000-0000-0000-0000-000000000001",
+    "createdAt": "2026-03-16T10:30:00.000Z",
+    "updatedAt": "2026-03-16T10:30:00.000Z"
+  },
+  {
+    "id": "660f9511-f3ac-52e5-b827-557766551111",
+    "name": "Wireless Mouse",
+    "description": "Ergonomic design",
+    "price": "29.99",
+    "imagePath": null,
+    "sellerId": "00000000-0000-0000-0000-000000000001",
+    "createdAt": "2026-03-16T09:15:00.000Z",
+    "updatedAt": "2026-03-16T09:15:00.000Z"
+  }
+]
+```
+
+**cURL Example:**
+```bash
+curl http://localhost:3003/products
+```
+
+---
+
+### 3. GET PRODUCT BY ID (Produs după ID)
+
+**Endpoint:** `GET /products/:id`
+
+**Description:** Obține un produs specific după ID-ul său UUID.
+
+**URL Parameters:**
+
+| Parameter | Tip  | Obligatoriu | Descriere          | Exemplu                                |
+|-----------|------|-------------|--------------------|----------------------------------------|
+| id        | UUID | Da          | UUID-ul produsului | "550e8400-e29b-41d4-a716-446655440000" |
+
+**Response Success (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Laptop Dell XPS 13",
+  "description": "High-performance laptop",
+  "price": "1299.99",
+  "imagePath": "/uploads/products/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png",
+  "sellerId": "00000000-0000-0000-0000-000000000001",
+  "createdAt": "2026-03-16T10:30:00.000Z",
+  "updatedAt": "2026-03-16T10:30:00.000Z"
+}
+```
+
+**Response Error (404 Not Found):**
+```json
+{
+  "statusCode": 404,
+  "message": "Product with id 550e8400-e29b-41d4-a716-446655440000 not found",
+  "error": "Not Found"
+}
+```
+
+**Response Error (400 Bad Request - UUID invalid):**
+```json
+{
+  "statusCode": 400,
+  "message": "Validation failed (uuid is expected)",
+  "error": "Bad Request"
+}
+```
+
+**cURL Example:**
+```bash
+curl http://localhost:3003/products/550e8400-e29b-41d4-a716-446655440000
+```
+
+---
+
+### 4. UPDATE PRODUCT (Actualizare Produs)
+
+**Endpoint:** `PUT /products/:id`
+
+**Description:** Actualizează un produs existent. Toate câmpurile sunt opționale. Dacă se încarcă o imagine nouă, cea veche este ștearsă automat.
+
+**Content-Type:** `multipart/form-data`
+
+**URL Parameters:**
+
+| Parameter | Tip  | Obligatoriu | Descriere          | Exemplu                                |
+|-----------|------|-------------|--------------------|----------------------------------------|
+| id        | UUID | Da          | UUID-ul produsului | "550e8400-e29b-41d4-a716-446655440000" |
+
+**Request Body (toate opționale):**
+
+| Campo       | Tip    | Descriere                                  | Exemplu                    |
+|-------------|--------|--------------------------------------------|-----------------------------|
+| name        | string | Numele produsului                         | "Laptop Dell XPS 15"        |
+| description | string | Descrierea produsului                      | "Updated description"       |
+| price       | number | Prețul produsului                          | 1499.99                     |
+| image       | file   | Fișier imagine nou (jpg, jpeg, png, gif, webp) | new-laptop.png         |
+
+**Validări:**
+- Imagine: max 10MB
+- Formate acceptate: jpg, jpeg, png, gif, webp
+- Nume fișier nou: generat automat cu UUID
+- Imaginea veche este ștearsă automat la încărcare nouă
+
+**Response Success (200 OK):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Laptop Dell XPS 15",
+  "description": "Updated description",
+  "price": "1499.99",
+  "imagePath": "/uploads/products/b2c3d4e5-f6a7-8901-bcde-f12345678901.png",
+  "sellerId": "00000000-0000-0000-0000-000000000001",
+  "createdAt": "2026-03-16T10:30:00.000Z",
+  "updatedAt": "2026-03-16T11:45:00.000Z"
+}
+```
+
+**Response Error (404 Not Found):**
+```json
+{
+  "statusCode": 404,
+  "message": "Product with id 550e8400-e29b-41d4-a716-446655440000 not found",
+  "error": "Not Found"
+}
+```
+
+**cURL Example (cu imagine nouă):**
+```bash
+curl -X PUT http://localhost:3003/products/550e8400-e29b-41d4-a716-446655440000 \
+  -F "name=Laptop Dell XPS 15" \
+  -F "price=1499.99" \
+  -F "image=@/path/to/new-image.png"
+```
+
+**cURL Example (doar text, fără imagine):**
+```bash
+curl -X PUT http://localhost:3003/products/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Laptop Dell XPS 15",
+    "price": 1499.99
+  }'
+```
+
+---
+
+### 5. DELETE PRODUCT (Ștergere Produs)
+
+**Endpoint:** `DELETE /products/:id`
+
+**Description:** Șterge un produs și imaginea asociată de pe disc.
+
+**URL Parameters:**
+
+| Parameter | Tip  | Obligatoriu | Descriere          | Exemplu                                |
+|-----------|------|-------------|--------------------|----------------------------------------|
+| id        | UUID | Da          | UUID-ul produsului | "550e8400-e29b-41d4-a716-446655440000" |
+
+**Response Success (204 No Content):**
+```
+(no response body)
+```
+
+**Response Error (404 Not Found):**
+```json
+{
+  "statusCode": 404,
+  "message": "Product with id 550e8400-e29b-41d4-a716-446655440000 not found",
+  "error": "Not Found"
+}
+```
+
+**cURL Example:**
+```bash
+curl -X DELETE http://localhost:3003/products/550e8400-e29b-41d4-a716-446655440000
+```
+
+---
+
+## ACCESS IMAGES (Acces Imagini)
+
+**Endpoint:** `GET /uploads/products/:filename`
+
+**Description:** Servește imaginile produselor ca fișiere statice.
+
+**URL Format:**
+```
+http://localhost:3003/uploads/products/{uuid}.{ext}
+```
+
+**Example:**
+```
+http://localhost:3003/uploads/products/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png
+```
+
+**cURL Example:**
+```bash
+curl http://localhost:3003/uploads/products/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png \
+  --output downloaded-image.png
+```
+
+---
+
+## DTOs (Data Transfer Objects)
+
+### CreateProductDto
+
+```typescript
+{
+  name: string;           // Required, max 255 caractere
+  description?: string;   // Optional
+  price: number;          // Required, >= 0
+  sellerId?: string;      // Optional, UUID format
+}
+```
+
+**Validări:**
+- `name`: required, string, maxLength(255)
+- `description`: optional, string
+- `price`: required, number, min(0)
+- `sellerId`: optional, UUID format
+
+### UpdateProductDto
+
+```typescript
+{
+  name?: string;          // Optional, max 255 caractere
+  description?: string;   // Optional
+  price?: number;         // Optional, >= 0
+}
+```
+
+**Validări:**
+- Toate câmpurile sunt opționale
+- Aceleași validări ca CreateProductDto când sunt prezente
+
+---
+
+## PRODUCT ENTITY (Structura Răspuns)
+
+```typescript
+{
+  id: string;              // UUID, generat automat
+  name: string;            // Numele produsului
+  description: string;     // Descrierea produsului (nullable)
+  price: string;           // Prețul (DECIMAL în DB, returnat ca string)
+  imagePath: string;       // Calea către imagine (nullable)
+  sellerId: string;        // UUID al vânzătorului
+  createdAt: string;       // ISO 8601 timestamp
+  updatedAt: string;       // ISO 8601 timestamp
+}
+```
+
+---
+
+## EXAMPLE WORKFLOWS (Flux de Lucru)
+
+### Workflow 1: Creează Produs cu Imagine din UI
+
+```javascript
+// Frontend - React/Vue/Angular
+const formData = new FormData();
+formData.append('name', 'Laptop Dell XPS 13');
+formData.append('description', 'High-performance laptop');
+formData.append('price', '1299.99');
+formData.append('image', fileInputElement.files[0]); // Fișier selectat din UI
+
+fetch('http://localhost:3003/products', {
+  method: 'POST',
+  body: formData
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('Product created:', data);
+    // Imaginea este accesibilă la: data.imagePath
+    // Ex: "/uploads/products/550e8400-e29b-41d4-a716-446655440000.png"
+  });
+```
+
+### Workflow 2: Actualizează Produs cu Imagine Nouă
+
+```javascript
+const formData = new FormData();
+formData.append('name', 'Laptop Dell XPS 15');
+formData.append('price', '1599.99');
+formData.append('image', newFileInputElement.files[0]);
+
+fetch('http://localhost:3003/products/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'PUT',
+  body: formData
+})
+  .then(response => response.json())
+  .then(data => {
+    console.log('Product updated:', data);
+    // Imaginea veche este ștearsă automat
+    // Noua imagine are un UUID diferit
+  });
+```
+
+### Workflow 3: Afișează Lista Produse cu Imagini
+
+```javascript
+fetch('http://localhost:3003/products')
+  .then(response => response.json())
+  .then(products => {
+    products.forEach(product => {
+      console.log(product.name);
+      if (product.imagePath) {
+        const imageUrl = `http://localhost:3003${product.imagePath}`;
+        console.log('Image URL:', imageUrl);
+        // Folosește imageUrl în <img> tag
+      }
+    });
+  });
+```
+
+---
+
+## ERROR CODES (Coduri de Eroare)
+
+| Status Code | Descriere                                    | Când Apare                                    |
+|-------------|----------------------------------------------|-----------------------------------------------|
+| 201         | Created                                      | Produs creat cu succes                        |
+| 200         | OK                                           | Operație reușită (GET, PUT)                   |
+| 204         | No Content                                   | Produs șters cu succes                        |
+| 400         | Bad Request                                  | Date invalide, UUID invalid, fișier invalid   |
+| 404         | Not Found                                    | Produs nu a fost găsit                        |
+| 413         | Payload Too Large                            | Imagine > 10MB                                |
+| 415         | Unsupported Media Type                       | Format de imagine neacceptat                  |
+| 500         | Internal Server Error                        | Eroare server                                 |
+
+---
+
+## FILE UPLOAD LIMITS (Limite Încărcare)
+
+- **Max File Size:** 10 MB
+- **Allowed Formats:** jpg, jpeg, png, gif, webp
+- **Filename Generation:** UUID v4 + extensie originală
+- **Storage Location:** `./uploads/products/`
+- **URL Access:** `/uploads/products/{uuid}.{ext}`
+
+**Exemplu nume fișier generat:**
+```
+Original: "my-product-photo.jpg"
+Saved as: "550e8400-e29b-41d4-a716-446655440000.jpg"
+```
+
+---
+
+## POSTMAN COLLECTION SETUP
+
+### Create Product
+```
+POST http://localhost:3003/products
+Body: form-data
+- name: Laptop Dell XPS 13
+- description: High-performance laptop
+- price: 1299.99
+- image: [select file]
+```
+
+### Get All Products
+```
+GET http://localhost:3003/products
+```
+
+### Get Product by ID
+```
+GET http://localhost:3003/products/{{productId}}
+```
+
+### Update Product
+```
+PUT http://localhost:3003/products/{{productId}}
+Body: form-data
+- name: Updated Name
+- price: 1499.99
+- image: [select file]
+```
+
+### Delete Product
+```
+DELETE http://localhost:3003/products/{{productId}}
+```
+
+---
+
+## SWAGGER DOCUMENTATION
+
+Documentație interactivă disponibilă la:
+```
+http://localhost:3003/api/docs
+```
+
+Swagger UI oferă:
+- Testare interactivă a API-ului
+- Schéme complete request/response
+- Exemple de utilizare
+- Validări și erori
+
+---
+
+## NOTES (Note Importante)
+
+1. **UUID Generation:** Fiecare imagine încărcată primește un UUID unic ca nume de fișier
+2. **Automatic Cleanup:** Imaginile vechi sunt șterse automat la update sau delete
+3. **Default Seller:** Dacă nu se specifică sellerId, se folosește ID-ul default
+4. **Image Path Format:** Toate căile încep cu `/uploads/products/`
+5. **Price Format:** În baza de date este DECIMAL(10,2), în răspuns este string
+6. **Timestamps:** Automat generate și actualizate de TypeORM
+7. **CORS:** Activat pentru toate originile (*) în development
+
+---
+
+## TROUBLESHOOTING
+
+### Problema: "Payload Too Large"
+**Soluție:** Imaginea depășește 10MB. Comprimă imaginea sau folosește un format mai eficient.
+
+### Problema: "Only image files are allowed"
+**Soluție:** Fișierul nu este o imagine validă. Folosește doar: jpg, jpeg, png, gif, webp.
+
+### Problema: "Product not found"
+**Soluție:** UUID-ul produsului este invalid sau produsul a fost șters.
+
+### Problema: Imaginea nu se încarcă în browser
+**Soluție:** Verifică că calea imagePath din răspuns este corectă și că fișierul există în `uploads/products/`.
+
+---
+
+## SUPPORT
+
+Pentru probleme sau întrebări:
+- Verifică logs: Serviciul loghează toate operațiile
+- Swagger: http://localhost:3003/api/docs
+- README: PRODUCT_MANAGEMENT.md
+
+---
+
+Documentație generată: 16 Martie 2026
+

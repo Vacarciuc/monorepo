@@ -1,0 +1,511 @@
+# Technical Specification (TS)
+
+## Seller Service – Marketplace Microservice
+
+---
+
+# 1. Scopul serviciului
+
+**Seller Service** este responsabil pentru:
+
+* gestionarea produselor vânzătorului
+* upload și management imagini produse
+* expunerea produselor către marketplace
+* procesarea comenzilor primite prin RabbitMQ
+* confirmarea sau respingerea comenzilor
+* salvarea statusului comenzilor
+
+Serviciul va fi implementat în **NestJS** și va rula într-un **container Docker separat**.
+
+În prima versiune sistemul va suporta **un singur seller**, dar arhitectura trebuie să permită extinderea pentru mai mulți vânzători.
+
+---
+
+# 2. Stack Tehnologic
+
+Backend:
+
+* Node.js
+* NestJS
+* PostgreSQL
+* TypeORM sau Prisma
+* RabbitMQ
+* Multer (pentru upload imagini)
+
+Testare:
+
+* Jest
+* Supertest
+
+Containerizare:
+
+* Docker
+
+---
+
+# 3. Responsabilități principale
+
+Seller Service trebuie să ofere următoarele funcționalități:
+
+### Management produse
+
+* creare produs
+* editare produs
+* ștergere produs
+* listare produse
+
+### Management imagini
+
+* upload imagine produs
+* salvare imagine pe disc
+* salvare path în baza de date
+* înlocuire imagine produs
+
+### Procesare comenzi
+
+* ascultare evenimente RabbitMQ
+* procesare comandă
+* confirmare sau respingere comandă
+* publicare eveniment rezultat
+
+---
+
+# 4. Structura aplicației
+
+seller-service/
+
+```
+src/
+  main.ts
+
+  modules/
+    products/
+      product.controller.ts
+      product.service.ts
+      product.entity.ts
+      product.module.ts
+
+    orders/
+      seller-order.controller.ts
+      seller-order.service.ts
+      seller-order.entity.ts
+      seller-order.module.ts
+
+  messaging/
+      rabbitmq.consumer.ts
+      rabbitmq.producer.ts
+
+  config/
+      rabbitmq.config.ts
+
+  uploads/
+      products/
+
+  dto/
+      create-product.dto.ts
+      update-product.dto.ts
+      order-created.event.ts
+      order-processed.event.ts
+
+test/
+  unit/
+  integration/
+  e2e/
+```
+
+---
+
+# 5. Baza de Date
+
+Database: **PostgreSQL**
+
+## Tabel produse
+
+products
+
+```
+id UUID PK
+name VARCHAR
+description TEXT
+price DECIMAL
+image_path VARCHAR
+seller_id UUID
+created_at TIMESTAMP
+updated_at TIMESTAMP
+```
+
+---
+
+## Tabel comenzi seller
+
+seller_orders
+
+```
+id UUID PK
+order_id UUID
+status VARCHAR
+processed_at TIMESTAMP
+created_at TIMESTAMP
+```
+
+Statusuri posibile:
+
+```
+PENDING
+CONFIRMED
+REJECTED
+```
+
+---
+
+# 6. Management imagini produse
+
+Imaginile produselor vor fi salvate **fizic pe disc**.
+
+Folder:
+
+```
+uploads/products/
+```
+
+Exemplu fișier:
+
+```
+uploads/products/1718023-laptop.png
+```
+
+În baza de date se salvează doar path-ul:
+
+```
+/uploads/products/1718023-laptop.png
+```
+
+---
+
+# 7. Upload imagine produs
+
+Upload-ul se face folosind **multipart/form-data**.
+
+Endpoint:
+
+POST `/products`
+
+Request:
+
+form-data
+
+```
+name
+description
+price
+image (file)
+```
+
+Flux:
+
+1. NestJS primește fișierul
+2. imaginea este salvată în `uploads/products`
+3. se generează nume unic
+4. path-ul imaginii este salvat în DB
+
+---
+
+# 8. Servirea imaginilor
+
+Seller Service trebuie să expună folderul `uploads` ca **static files**.
+
+Exemplu URL imagine:
+
+```
+http://localhost:3003/uploads/products/laptop.png
+```
+
+Frontend va folosi acest URL pentru afișare.
+
+---
+
+# 9. Endpoint-uri REST
+
+## Produse
+
+### Creare produs
+
+POST `/products`
+
+creează produs nou cu imagine.
+
+---
+
+### Listare produse
+
+GET `/products`
+
+Returnează toate produsele.
+
+---
+
+### Detalii produs
+
+GET `/products/:id`
+
+Returnează detaliile produsului.
+
+---
+
+### Editare produs
+
+PUT `/products/:id`
+
+Permite:
+
+* modificare nume
+* modificare preț
+* schimbare imagine
+
+Dacă imaginea este schimbată:
+
+* imaginea veche trebuie ștearsă
+* imaginea nouă trebuie salvată
+
+---
+
+### Ștergere produs
+
+DELETE `/products/:id`
+
+Șterge:
+
+* produsul din DB
+* imaginea de pe disc
+
+---
+
+# 10. RabbitMQ Configuration
+
+Exchange:
+
+```
+order.exchange
+```
+
+Queue:
+
+```
+seller.queue
+```
+
+Routing key:
+
+```
+order.created
+```
+
+Seller Service trebuie să asculte această coadă.
+
+---
+
+# 11. Eveniment primit
+
+Event: **OrderCreatedEvent**
+
+Payload:
+
+```
+{
+  "orderId": "uuid",
+  "sellerId": "uuid",
+  "items": [
+    {
+      "productId": "uuid",
+      "quantity": 1,
+      "price": 100
+    }
+  ],
+  "totalPrice": 100
+}
+```
+
+---
+
+# 12. Procesare comandă
+
+Flux:
+
+1. Seller Service primește mesaj din RabbitMQ
+2. salvează comanda în DB cu status `PENDING`
+3. simulează procesare comandă (1-3 secunde)
+4. confirmă comanda
+5. actualizează statusul în DB
+6. trimite eveniment `OrderProcessed`
+
+---
+
+# 13. Eveniment trimis
+
+Routing key:
+
+```
+order.processed
+```
+
+Payload:
+
+```
+{
+  "orderId": "uuid",
+  "status": "CONFIRMED"
+}
+```
+
+---
+
+# 14. Endpoint-uri pentru debug
+
+GET `/seller/orders`
+
+Returnează comenzile procesate de seller.
+
+---
+
+GET `/seller/orders/:id`
+
+Returnează detalii comandă.
+
+---
+
+POST `/seller/orders/:id/confirm`
+
+Confirmă manual comanda.
+
+---
+
+POST `/seller/orders/:id/reject`
+
+Respinge manual comanda.
+
+---
+
+# 15. Testare
+
+## Unit Tests
+
+Trebuie testate:
+
+* logica procesare comandă
+* CRUD produse
+* upload imagine
+
+---
+
+## Integration Tests
+
+Trebuie testate:
+
+* endpoint-uri produse
+* interacțiune DB
+* upload imagine
+
+---
+
+## E2E Tests
+
+Scenariu complet:
+
+1. publică event `OrderCreated`
+2. seller service procesează
+3. verifică DB
+4. verifică event `OrderProcessed`
+
+---
+
+# 16. Docker
+
+Seller Service trebuie să includă **Dockerfile**.
+
+Exemplu:
+
+```
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+CMD ["npm","run","start:prod"]
+```
+
+---
+
+# 17. Docker Volume pentru imagini
+
+Pentru a păstra imaginile după restart container:
+
+```
+volumes:
+ - ./uploads:/app/uploads
+```
+
+---
+
+# 18. Environment Variables
+
+```
+PORT=3003
+
+DB_HOST=seller-db
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=seller_db
+
+RABBITMQ_URL=amqp://rabbitmq:5672
+RABBITMQ_EXCHANGE=order.exchange
+RABBITMQ_QUEUE=seller.queue
+```
+
+---
+
+# 19. Logging
+
+Serviciul trebuie să logheze:
+
+* pornirea aplicației
+* conectarea la RabbitMQ
+* primirea comenzilor
+* procesarea comenzilor
+* upload imagini produse
+
+---
+
+# 20. Comportament așteptat
+
+După pornire:
+
+1. serviciul se conectează la PostgreSQL
+2. se conectează la RabbitMQ
+3. ascultă `seller.queue`
+4. expune API pentru produse
+5. servește imagini statice
+
+---
+
+# 21. Extensii viitoare
+
+Versiuni viitoare pot include:
+
+* multiple magazine (multi seller)
+* coadă RabbitMQ pentru fiecare seller
+* analytics produse
+* notificări email
+* dashboard pentru seller
+* upload imagini multiple
+* stoc produse
+
+---
+
+# END OF TECHNICAL SPECIFICATION
