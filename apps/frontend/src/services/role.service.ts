@@ -28,6 +28,10 @@ export const roleService = {
 
   isCustomer(): boolean {
     return this.getRole() === 'CUSTOMER';
+  },
+
+  isSeller(): boolean {
+    return this.getRole() === 'SELLER';
   }
 };
 

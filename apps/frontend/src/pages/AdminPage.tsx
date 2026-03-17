@@ -3,6 +3,7 @@ import ProductCard from '../components/ProductCard';
 import ProductForm from '../components/ProductForm';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../api/product.api';
 import type { Product, CreateProductRequest, UpdateProductRequest } from '../types/product';
+import { authService } from '../services/auth.service';
 
 const AdminPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -11,6 +12,7 @@ const AdminPage = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+  const isSeller = authService.isSeller();
 
   useEffect(() => {
     fetchProducts();
@@ -86,8 +88,12 @@ const AdminPage = () => {
     <div className="page-container">
       <div className="admin-container">
         <div className="admin-header">
-          <h1 className="admin-title">🛠️ Admin Panel</h1>
-          <p className="admin-subtitle">Manage your products</p>
+          <h1 className="admin-title">
+            {isSeller ? '📦 My Products' : '🛠️ Admin Panel'}
+          </h1>
+          <p className="admin-subtitle">
+            {isSeller ? 'Manage your product catalog' : 'Manage all products'}
+          </p>
           <button className="add-product-button" onClick={handleAddProduct}>
             ➕ Add New Product
           </button>

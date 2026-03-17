@@ -35,6 +35,10 @@ export const authService = {
 
   isCustomer(): boolean {
     return roleService.isCustomer();
+  },
+
+  isSeller(): boolean {
+    return roleService.isSeller();
   }
 };
 

@@ -5,6 +5,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const isAuthenticated = authService.isAuthenticated();
   const isAdmin = authService.isAdmin();
+  const isSeller = authService.isSeller();
 
   const handleLogout = () => {
     authService.logout();
@@ -21,9 +22,9 @@ const Navbar = () => {
           <Link to="/products" className="navbar-link">
             Products
           </Link>
-          {isAdmin && (
+          {(isAdmin || isSeller) && (
             <Link to="/admin" className="navbar-link admin-link">
-              Admin Panel
+              {isSeller ? 'My Products' : 'Admin Panel'}
             </Link>
           )}
           {isAuthenticated ? (

@@ -3,20 +3,23 @@ export interface Product {
   name: string;
   price: number;
   description?: string;
-  imageUrl?: string;
+  imagePath?: string;
+  sellerId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateProductRequest {
   name: string;
   description?: string;
   price: number;
-  imageUrl?: string;
+  image?: File;
 }
 
 export interface UpdateProductRequest {
   name?: string;
   description?: string;
   price?: number;
-  imageUrl?: string;
+  image?: File;
 }
 

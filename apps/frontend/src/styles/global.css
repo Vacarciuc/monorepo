@@ -366,6 +366,12 @@ body {
   box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.1);
 }
 
+.form-hint {
+  font-size: 0.85rem;
+  color: var(--gray);
+  margin-top: 0.25rem;
+}
+
 .submit-button {
   padding: 0.875rem;
   background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);

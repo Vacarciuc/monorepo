@@ -1,4 +1,5 @@
 import type { Product } from '../types/product';
+import { getImageUrl } from '../api/product.api';
 
 interface ProductCardProps {
   product: Product;
@@ -15,7 +16,7 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
     <div className="product-card">
       <div className="product-image-container">
         <img
-          src={product.imageUrl || defaultImage}
+          src={getImageUrl(product.imagePath)}
           alt={product.name}
           className="product-image"
           onError={(e) => {
@@ -64,5 +65,7 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
 };
 
 export default ProductCard;
+
+
 
 
