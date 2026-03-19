@@ -9,8 +9,16 @@ on:
 
 jobs:
   test:
-    name: Run Unit Tests
+    name: Test ${{ matrix.service }}
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - seller-service
+          - frontend
 
     steps:
       - name: Checkout Code
@@ -24,10 +32,12 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
+          cache-dependency-path: apps/${{ matrix.service }}/pnpm-lock.yaml
 
       - name: Install Dependencies
+        working-directory: apps/${{ matrix.service }}
         run: pnpm install --frozen-lockfile
 
       - name: Run Tests
-        working-directory: apps/auth-service
+        working-directory: apps/${{ matrix.service }}
         run: pnpm test
