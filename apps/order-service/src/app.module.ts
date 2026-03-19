@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
 import { ProductsModule } from './products/products.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
@@ -21,26 +20,15 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST', 'localhost'),
-        port: configService.get('DB_PORT', 5432),
-        username: configService.get('DB_USERNAME', 'postgres'),
-        password: configService.get('DB_PASSWORD', 'postgres'),
-        database: configService.get('DB_DATABASE', 'order_db'),
+        host: configService.get('ORDER_SERVICE_DB_HOST', ),
+        port: configService.get('ORDER_SERVICE_DB_PORT', ),
+        username: configService.get('ORDER_SERVICE_DB_USER', ),
+        password: configService.get('ORDER_SERVICE_DB_PASSWORD', ),
+        database: configService.get('ORDER_SERVICE_DB_NAME',),
         entities: [Product, CartItem, Order, OrderItem, OutboxEvent],
-        synchronize: configService.get('NODE_ENV') !== 'production',
+        synchronize: true,
       }),
       inject: [ConfigService],
-    }),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'your-secret-key'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRES_IN', '24h'),
-        },
-      }),
-      inject: [ConfigService],
-      global: true,
     }),
     ProductsModule,
     CartModule,

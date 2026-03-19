@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'; // 1. Import Swagger tools
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -15,10 +16,19 @@ async function bootstrap() {
     }),
   );
 
+  const config = new DocumentBuilder()
+    .setTitle('Order Service')
+    .setDescription('The Order Service API description')
+    .setVersion('1.0')
+    .addTag('orders')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+
+  SwaggerModule.setup('api', app, document);
+
   const port = process.env.PORT || 3002;
   await app.listen(port);
-  console.log(`Order Service is running on port ${port}`);
+  console.log(`Order Service is running on: http://localhost:${port}/api`);
 }
 bootstrap();
-
-
