@@ -23,6 +23,7 @@ import { AuthModule } from './auth/auth.module'
     ScheduleModule.forRoot(SCHEDULE_CONFIG),
     AuthModule,
   ],
+
   controllers: [],
   providers: [
     {
@@ -41,3 +42,4 @@ import { AuthModule } from './auth/auth.module'
   exports: [],
 })
 export class AppModule {}
+console.log(123)
