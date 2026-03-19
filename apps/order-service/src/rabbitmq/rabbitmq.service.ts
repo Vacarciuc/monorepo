@@ -44,7 +44,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       'order.exchange',
       routingKey,
       orderData,
-      { persistent: true },
+      {  },
     );
     console.log(`Published OrderCreated event for seller ${sellerId}`);
   }
