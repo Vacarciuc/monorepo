@@ -2,6 +2,11 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 't
 import { Order } from './order.entity';
 import { Product } from './product.entity';
 
+const moneyToCentsTransformer = {
+  to: (value: number) => Math.round(value * 100),
+  from: (value: string | number) => Number(value) / 100,
+};
+
 @Entity('order_items')
 export class OrderItem {
   @PrimaryGeneratedColumn('uuid')
@@ -16,7 +21,8 @@ export class OrderItem {
   @Column('int')
   quantity: number;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  // Stored as integer cents in DB to avoid decimal/string issues.
+  @Column('int', { name: 'price_cents', transformer: moneyToCentsTransformer })
   price: number;
 
   @ManyToOne(() => Order, (order) => order.items)

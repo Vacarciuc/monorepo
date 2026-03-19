@@ -4,19 +4,22 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { Order } from '../entities/order.entity';
 import { OrderItem } from '../entities/order-item.entity';
+import { Product } from '../entities/product.entity'; 
 import { ProductsModule } from '../products/products.module';
 import { CartModule } from '../cart/cart.module';
-import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
+import { RabbitMQModule } from '../rabbitmq/rabbitmq.module';
+import { OutboxModule } from '../outbox/outbox.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem]),
+    TypeOrmModule.forFeature([Order, OrderItem, Product]), 
     ProductsModule,
     CartModule,
+    RabbitMQModule,
+    OutboxModule,
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, RabbitMQService],
+  providers: [OrdersService],
   exports: [OrdersService],
 })
 export class OrdersModule {}
-
