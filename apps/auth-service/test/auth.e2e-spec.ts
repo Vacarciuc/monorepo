@@ -1,22 +1,13 @@
-import {
-  ExecutionContext,
-  INestApplication,
-  ValidationPipe,
-} from '@nestjs/common'
-import { APP_GUARD, Reflector } from '@nestjs/core'
+import { INestApplication, ValidationPipe } from '@nestjs/common'
+import { APP_GUARD } from '@nestjs/core'
 import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
 import request from 'supertest'
 import { DataSource } from 'typeorm'
 
 import { AppModule } from '@/app.module'
-import { IS_PUBLIC_DECORATOR_KEY } from '@/auth/auth.decorator'
-import { AuthGuard } from '@/auth/auth.guard'
-import { AuthService } from '@/auth/auth.service'
-import { DecodedJwt } from '@/auth/auth.types'
-import { UserRole } from '@/auth/user-role.enum'
-import { User } from '@/entities'
 import { RolesGuard } from '@/auth/roles.guard'
+import { User } from '@/entities'
 
 describe('AuthController', () => {
   let app: INestApplication

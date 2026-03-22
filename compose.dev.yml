@@ -7,10 +7,11 @@ services:
       POSTGRES_DB: ${AUTH_DB_NAME}
     ports:
       - "5432:5432"
-    volumes: [ auth-db-data:/var/lib/postgresql/data ]
-    networks: [ marketplace-network ]
+    volumes: [auth-db-data:/var/lib/postgresql/data]
+    networks: [marketplace-network]
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      &pg-healthcheck
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 3s
       retries: 3
@@ -18,24 +19,67 @@ services:
   auth-service:
     build:
       context: ./apps/auth-service
-      dockerfile: Dockerfile
-    env_file: [ ./apps/auth-service/.env.development ]
+      dockerfile: Dockerfile.dev
+    env_file: ./apps/auth-service/.env.development
     init: true
     ports:
       - "3001:3000"
+    restart: no
+    scale: 1
+    mem_limit: 2G
+    cpu_count: 1
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/auth-service/src/
+          target: /app/src/
+        - action: rebuild
+          path: ./apps/auth-service/package.json
+        - action: sync+restart
+          path: ./apps/auth-service/nest-cli.json
+          target: /app/nest-cli.json
     depends_on:
-      - auth-db
-    networks: [ marketplace-network ]
+      auth-db:
+        condition: service_started
+    networks: [marketplace-network]
+    healthcheck:
+      &node-healthcheck
+      test: [
+        "CMD", "curl", "-X", "GET", "http://localhost:3000/api/v1/health",
+        "-H", "accept: application/json"
+      ]
+      interval: 10s
+      timeout: 1s
+      retries: 2
+      start_period: 5s
 
   gateway:
     build:
       context: ./apps/gateway
-      dockerfile: Dockerfile.development
-    env_file: [ ./apps/gateway/.env.development ]
+      dockerfile: Dockerfile.dev
+    env_file: ./apps/gateway/.env.development
     init: true
     ports:
       - "3000:3000"
-    networks: [ marketplace-network ]
+    restart: no
+    scale: 1
+    mem_limit: 2G
+    cpu_count: 1
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/gateway/src/
+          target: /app/src/
+        - action: rebuild
+          path: ./apps/gateway/package.json
+        - action: sync+restart
+          path: ./apps/gateway/nest-cli.json
+          target: /app/nest-cli.json
+    depends_on:
+      auth-service:
+        condition: service_started
+    networks: [marketplace-network]
+    healthcheck: *node-healthcheck
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
@@ -45,10 +89,10 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${MQ_USER}
       RABBITMQ_DEFAULT_PASS: ${MQ_PASS}
-    volumes: [ rabbitmq-data:/var/lib/rabbitmq ]
-    networks: [ marketplace-network ]
+    volumes: [rabbitmq-data:/var/lib/rabbitmq]
+    networks: [marketplace-network]
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -61,32 +105,30 @@ services:
       POSTGRES_DB: ${ORDER_SERVICE_DB_NAME}
     ports:
       - "5433:5432"
-    volumes: [ order-db-data:/var/lib/postgresql/data ]
-    networks: [ marketplace-network ]
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 3s
-      retries: 3
+    volumes: [order-db-data:/var/lib/postgresql/data]
+    networks: [marketplace-network]
+    healthcheck: *pg-healthcheck
 
   order-service:
     build:
       context: ./apps/order-service
       dockerfile: Dockerfile
-    env_file: [ ./apps/order-service/.env.development ]
+    env_file: [./apps/order-service/.env.development]
     init: true
     ports:
       - "3002:3000"
     depends_on:
       - order-db
-    networks: [ marketplace-network ]
+    networks: [marketplace-network]
 
 volumes:
   auth-db-data:
   order-db-data:
   rabbitmq-data:
+  seller-db-data:
 
 networks:
   marketplace-network:
     driver: bridge
-
+    attachable: true
+    enable_ipv6: false

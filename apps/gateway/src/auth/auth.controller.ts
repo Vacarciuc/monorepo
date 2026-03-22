@@ -1,93 +1,51 @@
+import { Body, Controller, Get, Post } from "@nestjs/common";
 import {
-   Body,
-   Controller,
-   Get,
-   HttpCode,
-   HttpStatus,
-   Post,
-   Req,
-   Res,
-   UnauthorizedException,
-} from '@nestjs/common';
-import {
-   ApiBadRequestResponse,
-   ApiConflictResponse,
-   ApiCreatedResponse,
-   ApiOkResponse,
-   ApiOperation,
-   ApiTags,
-   ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
-import { Response } from 'express';
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
 
-import { AuthService } from '@/auth/auth.service';
-import { LoginDto } from '@/auth/dto/request/login.dto';
-import { RegisterDto } from '@/auth/dto/request/register.dto';
-import { Public } from '@/auth/decorators/auth.decorator';
-import { UserDto } from '@/user/dto/response/user.dto';
-import { AuthCookie } from '@/auth/enums/auth-cookie.enum';
-import { AppRequest } from '@/common/types/app-request.types';
-import { UserService } from '@/user/user.service';
+import { AuthService } from "@/auth/auth.service";
+import { LoginDto } from "@/auth/dto/request/login.dto";
+import { RegisterDto } from "@/auth/dto/request/register.dto";
+import { Authorize, Public, RequestUser } from "@/auth/auth.decorator";
 
-@Controller('auth')
-@Public()
-@ApiTags('Auth')
+@Controller("auth")
+@ApiTags("Auth")
 @ApiBadRequestResponse()
 @ApiUnauthorizedResponse()
 export class AuthController {
-   constructor(
-      private readonly authService: AuthService,
-      private readonly userService: UserService,
-   ) {}
+  constructor(private readonly authService: AuthService) {}
 
-   @ApiOperation({
-      summary: 'Get signed user data',
-      description: 'Required role: <b>User</b>',
-   })
-   @ApiOkResponse({ type: UserDto })
-   @Get()
-   async getSelf(@Req() request: AppRequest): Promise<UserDto> {
-      if (!request.user) {
-         throw new UnauthorizedException();
-      }
-      return this.userService.getOne(+request.user.sub);
-   }
+  @Post("login")
+  @Public()
+  async login(@Body() dto: LoginDto): ReturnType<AuthService["login"]> {
+    return this.authService.login(dto);
+  }
 
-   @Post('login')
-   @ApiOperation({ summary: 'Sign In', description: 'Required role: none' })
-   @ApiOkResponse({ type: UserDto })
-   async login(
-      @Body() body: LoginDto,
-      @Res({ passthrough: true }) response: Response,
-   ): Promise<UserDto> {
-      const data = await this.authService.login(body);
-      response.cookie(AuthCookie.AccessToken, data.token, { httpOnly: true });
-      response.cookie(AuthCookie.Authenticated, true);
-      return data.user;
-   }
+  @Post("register")
+  @Public()
+  @ApiOperation({})
+  @ApiOkResponse({ type: String, description: "JWT token" })
+  @ApiConflictResponse()
+  async register(
+    @Body() dto: RegisterDto,
+  ): ReturnType<AuthService["register"]> {
+    return this.authService.register(dto);
+  }
 
-   @Post('register')
-   @HttpCode(HttpStatus.CREATED)
-   @ApiOperation({ summary: 'Sign Up', description: 'Required role: none' })
-   @ApiConflictResponse()
-   @ApiCreatedResponse({ type: UserDto })
-   async register(
-      @Body() body: RegisterDto,
-      @Res({ passthrough: true }) response: Response,
-   ): Promise<UserDto> {
-      const data = await this.authService.register(body);
-      response.cookie(AuthCookie.AccessToken, data.token, { httpOnly: true });
-      response.cookie(AuthCookie.Authenticated, true);
-      return data.user;
-   }
-
-   @Post('unauthorize')
-   @ApiOperation({
-      summary: 'Sign out',
-      description: 'Removes the token from cookies',
-   })
-   unauthorize(@Res({ passthrough: true }) response: Response) {
-      response.clearCookie(AuthCookie.AccessToken, { httpOnly: true });
-      response.clearCookie(AuthCookie.Authenticated);
-   }
+  @Get("")
+  @Authorize()
+  @ApiOperation({})
+  @ApiOkResponse({ type: String, description: "JWT token" })
+  @ApiConflictResponse()
+  async getSelf(
+    @RequestUser() token: string,
+  ): ReturnType<AuthService["getSelf"]> {
+    console.log(token);
+    return this.authService.getSelf(token);
+  }
 }

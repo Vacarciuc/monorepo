@@ -13,6 +13,7 @@ import { SERVE_STATIC_CONFIG } from '@/config/serve-static.config'
 import { TYPEORM_CONFIG } from '@/config/typeorm.config'
 import { LoggingInterceptor } from '@/interceptors/logging.interceptor'
 
+import { HealthModule } from '../health/health.module'
 import { AuthModule } from './auth/auth.module'
 
 @Module({
@@ -22,6 +23,7 @@ import { AuthModule } from './auth/auth.module'
     ServeStaticModule.forRootAsync(SERVE_STATIC_CONFIG),
     ScheduleModule.forRoot(SCHEDULE_CONFIG),
     AuthModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [

@@ -8,7 +8,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "typecheck": "tsc -p tsconfig.json && echo Success"
+    "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.0",
@@ -18,6 +18,7 @@
     "@nestjs/core": "^11.0.20",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.0.20",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/serve-static": "^5.0.3",
     "@nestjs/swagger": "^11.1.4",
     "@nestjs/terminus": "^11.0.0",
@@ -26,6 +27,7 @@
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",
     "express": "^5.1.0",
+    "helmet": "^8.1.0",
     "path-to-regexp": "^8.2.0",
     "qs": "^6.14.0",
     "rxjs": "^7.8.2",

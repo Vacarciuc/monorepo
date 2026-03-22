@@ -10,15 +10,15 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { plainToInstance } from 'class-transformer'
 import { FindOneOptions, Repository } from 'typeorm'
 
-import { UserRole } from '@/auth/user-role.enum'
 import { CryptoService } from '@/crypto/crypto.service'
 import { GetSelfDto } from '@/dto/get-self.dto'
 import { LoginDto } from '@/dto/login.dto'
 import { RegisterDto } from '@/dto/register.dto'
 import { User } from '@/entities'
 import { AppEnv } from '@/types/app-env.types'
+import { DecodedJwt } from '@/auth/auth'
+import { UserRole } from '@/auth/user-role'
 
-import { DecodedJwt } from './auth.types'
 
 @Injectable()
 export class AuthService {

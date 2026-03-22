@@ -1,4 +1,4 @@
-import type { UserRole } from '@/auth/user-role.enum'
+import { UserRole } from '@/auth/user-role'
 
 export interface DecodedJwt {
   sub: number

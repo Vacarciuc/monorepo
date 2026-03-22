@@ -1,5 +1,5 @@
-import type {Config} from 'prettier'
-import type {PrettierConfig} from '@trivago/prettier-plugin-sort-imports'
+import type { PrettierConfig } from '@trivago/prettier-plugin-sort-imports'
+import type { Config } from 'prettier'
 
 const config: Config & PrettierConfig = {
   singleQuote: true,
@@ -14,15 +14,13 @@ const config: Config & PrettierConfig = {
   embeddedLanguageFormatting: 'auto',
   printWidth: 80,
   quoteProps: 'preserve',
-  importOrderParserPlugins: ["typescript", "decorators-legacy"],
-  plugins: [
-    '@trivago/prettier-plugin-sort-imports',
-  ],
+  importOrderParserPlugins: ['typescript', 'decorators-legacy'],
+  plugins: ['@trivago/prettier-plugin-sort-imports'],
   importOrder: ['^~/(.*)$', '^@/(.*)$', '^[./]'],
   importOrderCaseInsensitive: false,
   importOrderSeparation: true,
   importOrderGroupNamespaceSpecifiers: true,
-  importOrderSortSpecifiers: true
+  importOrderSortSpecifiers: true,
 }
 
 export default config
