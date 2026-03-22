@@ -33,7 +33,7 @@ async function bootstrap() {
   // Setup Swagger documentation
   setupSwagger(app);
 
-  const port = process.env.PORT || 3003;
+  const port = process.env.PORT || 3002;
   await app.listen(port);
 
   logger.log(`🚀 Seller Service running on: http://localhost:${port}`);

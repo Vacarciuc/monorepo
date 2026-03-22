@@ -4,7 +4,8 @@ import { authService } from '../services/auth.service';
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API || 'http://localhost:3001';
 
 const apiClient = axios.create({
-  baseURL: AUTH_API_URL,
+  // auth-service uses global prefix /api and versioning v1
+  baseURL: `${AUTH_API_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
   },

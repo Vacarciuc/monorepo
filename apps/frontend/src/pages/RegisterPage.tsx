@@ -1,13 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth.service';
-import type { UserRole } from '../types/user';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('CUSTOMER');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -21,19 +20,15 @@ const RegisterPage = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
       return;
     }
 
     setLoading(true);
 
     try {
-      await authService.register({
-        email,
-        password,
-        role,
-      });
+      await authService.register({ email, username, password });
       navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
@@ -68,6 +63,23 @@ const RegisterPage = () => {
             </div>
 
             <div className="form-group">
+              <label htmlFor="username" className="form-label">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                className="form-input"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="your_username"
+                required
+                minLength={3}
+                maxLength={30}
+              />
+            </div>
+
+            <div className="form-group">
               <label htmlFor="password" className="form-label">
                 Password
               </label>
@@ -79,7 +91,7 @@ const RegisterPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
 
@@ -95,23 +107,8 @@ const RegisterPage = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={8}
               />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="role" className="form-label">
-                Account Type
-              </label>
-              <select
-                id="role"
-                className="form-select"
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-              >
-                <option value="CUSTOMER">Customer</option>
-                <option value="ADMIN">Admin</option>
-              </select>
             </div>
 
             <button
@@ -136,5 +133,3 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
-
-

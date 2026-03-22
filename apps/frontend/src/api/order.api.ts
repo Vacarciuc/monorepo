@@ -2,7 +2,7 @@ import axios from 'axios';
 import { authService } from '../services/auth.service';
 import type { CreateOrderRequest, CreateOrderResponse } from '../types/order';
 
-const ORDER_API_URL = import.meta.env.VITE_ORDER_API || 'http://localhost:3002';
+const ORDER_API_URL = import.meta.env.VITE_ORDER_API || 'http://localhost:3003';
 
 const orderClient = axios.create({
   baseURL: ORDER_API_URL,

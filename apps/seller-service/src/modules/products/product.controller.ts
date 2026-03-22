@@ -30,7 +30,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ProductService } from './product.service';
 import { CreateProductDto } from '../../dto/create-product.dto';
 import { UpdateProductDto } from '../../dto/update-product.dto';
-import { Product } from '../../database/entities/product.entity';
+import { ProductResponseDto } from '../../dto/product-response.dto';
 
 // Multer configuration for image upload
 const multerOptions = {
@@ -92,6 +92,12 @@ export class ProductController {
           example: 1299.99,
           minimum: 0,
         },
+        quantity: {
+          type: 'integer',
+          example: 100,
+          minimum: 0,
+          default: 0,
+        },
         sellerId: {
           type: 'string',
           format: 'uuid',
@@ -108,7 +114,7 @@ export class ProductController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Product created successfully',
-    type: Product,
+    type: ProductResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Invalid input data or file format',
@@ -116,9 +122,10 @@ export class ProductController {
   async createProduct(
     @Body() createProductDto: CreateProductDto,
     @UploadedFile() file?: Express.Multer.File,
-  ): Promise<Product> {
+  ): Promise<ProductResponseDto> {
     const imagePath = file ? `/uploads/products/${file.filename}` : undefined;
-    return this.productService.createProduct(createProductDto, imagePath);
+    const product = await this.productService.createProduct(createProductDto, imagePath);
+    return ProductResponseDto.fromEntity(product);
   }
 
   @Get()
@@ -130,10 +137,11 @@ export class ProductController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of all products retrieved successfully',
-    type: [Product],
+    type: [ProductResponseDto],
   })
-  async getAllProducts(): Promise<Product[]> {
-    return this.productService.findAllProducts();
+  async getAllProducts(): Promise<ProductResponseDto[]> {
+    const products = await this.productService.findAllProducts();
+    return ProductResponseDto.fromEntities(products);
   }
 
   @Get(':id')
@@ -151,7 +159,7 @@ export class ProductController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Product found and retrieved successfully',
-    type: Product,
+    type: ProductResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Invalid UUID format',
@@ -161,8 +169,9 @@ export class ProductController {
   })
   async getProductById(
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<Product> {
-    return this.productService.findProductById(id);
+  ): Promise<ProductResponseDto> {
+    const product = await this.productService.findProductById(id);
+    return ProductResponseDto.fromEntity(product);
   }
 
   @Put(':id')
@@ -198,6 +207,11 @@ export class ProductController {
           example: 1499.99,
           minimum: 0,
         },
+        quantity: {
+          type: 'integer',
+          example: 50,
+          minimum: 0,
+        },
         image: {
           type: 'string',
           format: 'binary',
@@ -209,7 +223,7 @@ export class ProductController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Product updated successfully',
-    type: Product,
+    type: ProductResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Invalid input data or file format',
@@ -221,9 +235,10 @@ export class ProductController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProductDto: UpdateProductDto,
     @UploadedFile() file?: Express.Multer.File,
-  ): Promise<Product> {
+  ): Promise<ProductResponseDto> {
     const imagePath = file ? `/uploads/products/${file.filename}` : undefined;
-    return this.productService.updateProduct(id, updateProductDto, imagePath);
+    const product = await this.productService.updateProduct(id, updateProductDto, imagePath);
+    return ProductResponseDto.fromEntity(product);
   }
 
   @Delete(':id')

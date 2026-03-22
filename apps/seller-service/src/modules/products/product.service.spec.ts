@@ -14,6 +14,7 @@ describe('ProductService', () => {
     name: 'Test Product',
     description: 'Test Description',
     price: 99.99,
+    quantity: 10,
     imagePath: '/uploads/products/test.png',
     sellerId: '00000000-0000-0000-0000-000000000001',
     createdAt: new Date(),
@@ -72,6 +73,35 @@ describe('ProductService', () => {
       expect(mockRepository.save).toHaveBeenCalledWith(mockProduct);
       expect(result).toEqual(mockProduct);
     });
+
+    it('should create a product with quantity', async () => {
+      const createDto = { name: 'Tea', price: 10.0, quantity: 50 };
+      const productWithQty = { ...mockProduct, quantity: 50 };
+
+      mockRepository.create.mockReturnValue(productWithQty);
+      mockRepository.save.mockResolvedValue(productWithQty);
+
+      const result = await service.createProduct(createDto);
+
+      expect(result.quantity).toBe(50);
+    });
+
+    it('should use provided sellerId if given', async () => {
+      const createDto = {
+        name: 'Test',
+        price: 10,
+        sellerId: 'seller-123',
+      };
+      mockRepository.create.mockReturnValue({ ...mockProduct, sellerId: 'seller-123' });
+      mockRepository.save.mockResolvedValue({ ...mockProduct, sellerId: 'seller-123' });
+
+      const result = await service.createProduct(createDto);
+
+      expect(mockRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({ sellerId: 'seller-123' }),
+      );
+      expect(result.sellerId).toBe('seller-123');
+    });
   });
 
   describe('findAllProducts', () => {
@@ -123,6 +153,24 @@ describe('ProductService', () => {
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.name).toEqual(updateDto.name);
       expect(result.price).toEqual(updateDto.price);
+    });
+
+    it('should update product quantity', async () => {
+      const updateDto = { quantity: 200 };
+      mockRepository.findOne.mockResolvedValue(mockProduct);
+      mockRepository.save.mockResolvedValue({ ...mockProduct, quantity: 200 });
+
+      const result = await service.updateProduct(mockProduct.id, updateDto);
+
+      expect(result.quantity).toBe(200);
+    });
+
+    it('should throw NotFoundException if product not found during update', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.updateProduct('non-existent', { name: 'x' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

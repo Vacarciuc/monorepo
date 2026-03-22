@@ -14,6 +14,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
   const [name, setName] = useState(product?.name || '');
   const [description, setDescription] = useState(product?.description || '');
   const [price, setPrice] = useState(product?.price?.toString() || '');
+  const [quantity, setQuantity] = useState(product?.quantity?.toString() ?? '0');
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(
     product?.imagePath ? getImageUrl(product.imagePath) : ''
@@ -65,6 +66,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
         name,
         description: description || undefined,
         price: parseFloat(price),
+        quantity: parseInt(quantity, 10) || 0,
         image: image || undefined,
       };
 
@@ -115,21 +117,39 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="price" className="form-label">
-              Price ($) *
-            </label>
-            <input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0"
-              className="form-input"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="0.00"
-              required
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="price" className="form-label">
+                Price ($) *
+              </label>
+              <input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                className="form-input"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0.00"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="quantity" className="form-label">
+                Stock (units)
+              </label>
+              <input
+                id="quantity"
+                type="number"
+                step="1"
+                min="0"
+                className="form-input"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="0"
+              />
+            </div>
           </div>
 
           <div className="form-group">
