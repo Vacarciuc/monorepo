@@ -21,15 +21,22 @@ describe('ProductForm', () => {
       expect(screen.getByLabelText(/Price/i)).toHaveValue(null);
     });
 
-    it('renders all form fields', () => {
+    it('renders all form fields including quantity', () => {
       render(<ProductForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
       expect(screen.getByLabelText(/Product Name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Price/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Stock/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Product Image/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Add Product/i })).toBeInTheDocument();
+    });
+
+    it('defaults quantity to 0', () => {
+      render(<ProductForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+      const quantityInput = screen.getByLabelText(/Stock/i) as HTMLInputElement;
+      expect(quantityInput.value).toBe('0');
     });
 
     it('updates form fields when user types', () => {
@@ -38,17 +45,20 @@ describe('ProductForm', () => {
       const nameInput = screen.getByLabelText(/Product Name/i) as HTMLInputElement;
       const descInput = screen.getByLabelText(/Description/i) as HTMLTextAreaElement;
       const priceInput = screen.getByLabelText(/Price/i) as HTMLInputElement;
+      const quantityInput = screen.getByLabelText(/Stock/i) as HTMLInputElement;
 
       fireEvent.change(nameInput, { target: { value: 'New Product' } });
       fireEvent.change(descInput, { target: { value: 'Product description' } });
       fireEvent.change(priceInput, { target: { value: '29.99' } });
+      fireEvent.change(quantityInput, { target: { value: '50' } });
 
       expect(nameInput.value).toBe('New Product');
       expect(descInput.value).toBe('Product description');
       expect(priceInput.value).toBe('29.99');
+      expect(quantityInput.value).toBe('50');
     });
 
-    it('calls onSubmit with form data when submitted', async () => {
+    it('calls onSubmit with form data including quantity when submitted', async () => {
       mockOnSubmit.mockResolvedValue(undefined);
 
       render(<ProductForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
@@ -56,6 +66,7 @@ describe('ProductForm', () => {
       fireEvent.change(screen.getByLabelText(/Product Name/i), { target: { value: 'New Product' } });
       fireEvent.change(screen.getByLabelText(/Description/i), { target: { value: 'Product description' } });
       fireEvent.change(screen.getByLabelText(/Price/i), { target: { value: '29.99' } });
+      fireEvent.change(screen.getByLabelText(/Stock/i), { target: { value: '25' } });
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /Add Product/i }));
@@ -65,8 +76,26 @@ describe('ProductForm', () => {
         name: 'New Product',
         description: 'Product description',
         price: 29.99,
+        quantity: 25,
         image: undefined,
       });
+    });
+
+    it('calls onSubmit with quantity 0 when not changed', async () => {
+      mockOnSubmit.mockResolvedValue(undefined);
+
+      render(<ProductForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+
+      fireEvent.change(screen.getByLabelText(/Product Name/i), { target: { value: 'New Product' } });
+      fireEvent.change(screen.getByLabelText(/Price/i), { target: { value: '29.99' } });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /Add Product/i }));
+      });
+
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ quantity: 0 }),
+      );
     });
 
     it('calls onCancel when cancel button is clicked', () => {
@@ -84,16 +113,18 @@ describe('ProductForm', () => {
       name: 'Existing Product',
       description: 'Existing description',
       price: 99.99,
+      quantity: 42,
       imagePath: '/uploads/product.jpg',
     };
 
-    it('renders form with existing product data', () => {
+    it('renders form with existing product data including quantity', () => {
       render(<ProductForm product={existingProduct} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
       expect(screen.getByText(/Edit Product/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Product Name/i)).toHaveValue('Existing Product');
       expect(screen.getByLabelText(/Description/i)).toHaveValue('Existing description');
       expect(screen.getByLabelText(/Price/i)).toHaveValue(99.99);
+      expect(screen.getByLabelText(/Stock/i)).toHaveValue(42);
     });
 
     it('displays update button instead of add button', () => {
@@ -103,13 +134,14 @@ describe('ProductForm', () => {
       expect(screen.queryByRole('button', { name: /Add Product/i })).not.toBeInTheDocument();
     });
 
-    it('calls onSubmit with updated data', async () => {
+    it('calls onSubmit with updated data including quantity', async () => {
       mockOnSubmit.mockResolvedValue(undefined);
 
       render(<ProductForm product={existingProduct} onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
       fireEvent.change(screen.getByLabelText(/Product Name/i), { target: { value: 'Updated Product' } });
       fireEvent.change(screen.getByLabelText(/Price/i), { target: { value: '149.99' } });
+      fireEvent.change(screen.getByLabelText(/Stock/i), { target: { value: '100' } });
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /Update Product/i }));
@@ -119,6 +151,7 @@ describe('ProductForm', () => {
         name: 'Updated Product',
         description: 'Existing description',
         price: 149.99,
+        quantity: 100,
         image: undefined,
       });
     });
@@ -209,11 +242,23 @@ describe('ProductForm', () => {
       expect(screen.getByLabelText(/Description/i)).not.toBeRequired();
     });
 
+    it('does not require quantity', () => {
+      render(<ProductForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+      expect(screen.getByLabelText(/Stock/i)).not.toBeRequired();
+    });
+
     it('accepts price with decimal values', () => {
       render(<ProductForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
       const priceInput = screen.getByLabelText(/Price/i);
       expect(priceInput).toHaveAttribute('step', '0.01');
       expect(priceInput).toHaveAttribute('type', 'number');
+    });
+
+    it('quantity input only accepts integers', () => {
+      render(<ProductForm onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
+      const quantityInput = screen.getByLabelText(/Stock/i);
+      expect(quantityInput).toHaveAttribute('step', '1');
+      expect(quantityInput).toHaveAttribute('min', '0');
     });
   });
 });

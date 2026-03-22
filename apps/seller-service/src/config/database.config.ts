@@ -1,5 +1,6 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SellerOrder } from '../database/entities/seller-order.entity';
+import {Product} from "../database/entities/product.entity";
 
 export const getDatabaseConfig = (): TypeOrmModuleOptions => ({
   type: 'postgres',
@@ -8,8 +9,8 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => ({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'seller_db',
-  entities: [SellerOrder],
-  synchronize: false, // Set to false in production
+  entities: [SellerOrder, Product],
+  synchronize: true,
   logging: process.env.NODE_ENV === 'development',
 });
 

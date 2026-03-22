@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsUUID, Min, MaxLength } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsUUID, IsInt, Min, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -29,6 +29,18 @@ export class CreateProductDto {
   @Type(() => Number)
   @Min(0)
   price: number;
+
+  @ApiPropertyOptional({
+    description: 'Available stock quantity',
+    example: 100,
+    minimum: 0,
+    default: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  @Min(0)
+  quantity?: number;
 
   @ApiPropertyOptional({
     description: 'Seller unique identifier (optional, defaults to default seller)',

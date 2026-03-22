@@ -2,7 +2,7 @@ import axios from 'axios';
 import { authService } from '../services/auth.service';
 import type { Product, CreateProductRequest, UpdateProductRequest } from '../types/product';
 
-const SELLER_API_URL = import.meta.env.VITE_SELLER_API || 'http://localhost:3003';
+const SELLER_API_URL = import.meta.env.VITE_SELLER_API || 'http://localhost:3002';
 
 const productClient = axios.create({
   baseURL: SELLER_API_URL,
@@ -34,6 +34,10 @@ export const createProduct = async (product: CreateProductRequest): Promise<Prod
     formData.append('description', product.description);
   }
 
+  if (product.quantity !== undefined) {
+    formData.append('quantity', product.quantity.toString());
+  }
+
   if (product.image) {
     formData.append('image', product.image);
   }
@@ -59,6 +63,10 @@ export const updateProduct = async (id: string, product: UpdateProductRequest): 
 
   if (product.description !== undefined) {
     formData.append('description', product.description);
+  }
+
+  if (product.quantity !== undefined) {
+    formData.append('quantity', product.quantity.toString());
   }
 
   if (product.image) {

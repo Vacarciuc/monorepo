@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, Min } from 'class-validator';
 
 @Entity('products')
 export class Product {
@@ -40,6 +41,17 @@ export class Product {
   })
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
+
+  @ApiProperty({
+    description: 'Available stock quantity (units)',
+    example: 100,
+    minimum: 0,
+    default: 0,
+  })
+  @IsInt()
+  @Min(0)
+  @Column({ type: 'int', default: 0, name: 'quantity' })
+  quantity: number;
 
   @ApiProperty({
     description: 'Path to product image',
