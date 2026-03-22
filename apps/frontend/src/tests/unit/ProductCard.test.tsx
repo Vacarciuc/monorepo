@@ -51,6 +51,18 @@ describe('ProductCard', () => {
       const img = screen.getByAltText('Organic Green Tea') as HTMLImageElement;
       expect(img).toBeInTheDocument();
     });
+
+    it('shows skeleton while image is loading', () => {
+      const { container } = render(<ProductCard product={baseProduct} />);
+      expect(container.querySelector('.product-image-skeleton')).toBeInTheDocument();
+    });
+
+    it('hides skeleton after image loads', () => {
+      const { container } = render(<ProductCard product={baseProduct} />);
+      const img = screen.getByAltText('Organic Green Tea') as HTMLImageElement;
+      fireEvent.load(img);
+      expect(container.querySelector('.product-image-skeleton')).not.toBeInTheDocument();
+    });
   });
 
   describe('Stock / Quantity display', () => {

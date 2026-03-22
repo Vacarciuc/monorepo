@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Product } from '../types/product';
 import { getImageUrl } from '../api/product.api';
 
@@ -10,25 +11,42 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: ProductCardProps) => {
-  const defaultImage = 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400&h=300&fit=crop';
+  const defaultImage =
+    'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400&h=300&fit=crop';
   const inStock = product.quantity > 0;
+  const hasImage = !!product.imagePath;
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <div className="product-card">
       <div className="product-image-container">
+        {/* Skeleton shown while the real image is loading */}
+        {!imgLoaded && (
+          <div className="product-image-skeleton" aria-label="Loading image…" />
+        )}
         <img
           src={getImageUrl(product.imagePath)}
           alt={product.name}
-          className="product-image"
+          className={`product-image${imgLoaded ? ' loaded' : ''}`}
+          style={imgLoaded ? undefined : { opacity: 0, position: 'absolute' }}
+          onLoad={() => setImgLoaded(true)}
           onError={(e) => {
             e.currentTarget.src = defaultImage;
+            setImgLoaded(true);
           }}
         />
-        {!inStock && <div className="out-of-stock-badge">Out of Stock</div>}
+        {!inStock && (
+          <div className="out-of-stock-badge">Out of Stock</div>
+        )}
+        {!hasImage && imgLoaded && (
+          <div className="no-photo-badge">📷 No photo</div>
+        )}
       </div>
+
       <div className="product-card-header">
         <h3 className="product-name">{product.name}</h3>
       </div>
+
       <div className="product-card-body">
         {product.description && (
           <p className="product-description">{product.description}</p>
@@ -38,19 +56,14 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
           {inStock ? `📦 ${product.quantity} units in stock` : '❌ Out of stock'}
         </p>
       </div>
+
       <div className="product-card-footer">
         {isAdmin ? (
           <div className="admin-actions">
-            <button
-              className="edit-button"
-              onClick={() => onEdit?.(product)}
-            >
+            <button className="edit-button" onClick={() => onEdit?.(product)}>
               ✏️ Edit
             </button>
-            <button
-              className="delete-button"
-              onClick={() => onDelete?.(product.id)}
-            >
+            <button className="delete-button" onClick={() => onDelete?.(product.id)}>
               🗑️ Delete
             </button>
           </div>
@@ -71,7 +84,3 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
 };
 
 export default ProductCard;
-
-
-
-
