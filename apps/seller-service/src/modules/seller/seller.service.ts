@@ -1,7 +1,15 @@
-import { Injectable, Logger, NotFoundException, forwardRef, Inject } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { SellerOrder, OrderStatus } from '../../database/entities/seller-order.entity';
+import { Product } from '../../database/entities/product.entity';
 import { OrderCreatedEvent } from '../../dto/order-created.event';
 import { RabbitMQConsumer } from '../../messaging/rabbitmq.consumer';
 
@@ -12,6 +20,8 @@ export class SellerService {
   constructor(
     @InjectRepository(SellerOrder)
     private readonly sellerOrderRepository: Repository<SellerOrder>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
     @Inject(forwardRef(() => RabbitMQConsumer))
     private readonly rabbitMQConsumer: RabbitMQConsumer,
   ) {}
@@ -19,16 +29,17 @@ export class SellerService {
   async processOrder(event: OrderCreatedEvent): Promise<SellerOrder> {
     this.logger.log(`Processing order ${event.orderId}`);
 
-    // Save order with PENDING status (waiting for manual confirmation)
     const sellerOrder = this.sellerOrderRepository.create({
       orderId: event.orderId,
       status: OrderStatus.PENDING,
+      orderItems: event.items, // snapshot items for later use at confirm time
     });
 
-    await this.sellerOrderRepository.save(sellerOrder);
-    this.logger.log(`Order ${event.orderId} saved with PENDING status - waiting for manual confirmation`);
-
-    return sellerOrder;
+    const saved = await this.sellerOrderRepository.save(sellerOrder);
+    this.logger.log(
+      `Order ${event.orderId} saved as PENDING with ${event.items.length} item(s)`,
+    );
+    return saved;
   }
 
   async findAllOrders(): Promise<SellerOrder[]> {
@@ -48,35 +59,89 @@ export class SellerService {
   async confirmOrder(id: string): Promise<SellerOrder> {
     const order = await this.findOrderById(id);
 
-    order.status = OrderStatus.CONFIRMED;
-    order.processedAt = new Date();
-    await this.sellerOrderRepository.save(order);
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Order ${id} is already ${order.status} and cannot be confirmed`,
+      );
+    }
 
-    this.logger.log(`Order ${order.orderId} manually confirmed`);
+    // Run everything inside a SERIALIZABLE transaction so no concurrent
+    // session can read or write the same product rows until we commit.
+    const confirmed = await this.dataSource.transaction(
+      'SERIALIZABLE',
+      async (em) => {
+        // --- 1. Lock all affected product rows (SELECT … FOR UPDATE) ---
+        const productIds = order.orderItems.map((i) => i.productId);
 
-    // Acknowledge message in RabbitMQ (delete from queue)
+        const products = await em
+          .getRepository(Product)
+          .createQueryBuilder('p')
+          .setLock('pessimistic_write') // SELECT … FOR UPDATE
+          .whereInIds(productIds)
+          .getMany();
+
+        // --- 2. Validate stock for every item ---
+        for (const item of order.orderItems) {
+          const product = products.find((p) => p.id === item.productId);
+
+          if (!product) {
+            throw new NotFoundException(
+              `Product ${item.productId} not found – cannot confirm order`,
+            );
+          }
+
+          if (product.quantity < item.quantity) {
+            throw new BadRequestException(
+              `Insufficient stock for product "${product.name}": ` +
+                `requested ${item.quantity}, available ${product.quantity}`,
+            );
+          }
+        }
+
+        // --- 3. Decrement stock for each item ---
+        for (const item of order.orderItems) {
+          const product = products.find((p) => p.id === item.productId)!;
+          product.quantity -= item.quantity;
+          await em.getRepository(Product).save(product);
+          this.logger.log(
+            `Stock updated: product "${product.name}" ` +
+              `${product.quantity + item.quantity} → ${product.quantity}`,
+          );
+        }
+
+        // --- 4. Mark order as CONFIRMED ---
+        order.status = OrderStatus.CONFIRMED;
+        order.processedAt = new Date();
+        return em.getRepository(SellerOrder).save(order);
+      },
+    );
+
+    this.logger.log(`Order ${order.orderId} confirmed and stock decremented`);
+
+    // Acknowledge the RabbitMQ message (remove from queue)
     await this.rabbitMQConsumer.acknowledgeOrder(order.orderId);
 
-    return order;
+    return confirmed;
   }
 
   async rejectOrder(id: string): Promise<SellerOrder> {
     const order = await this.findOrderById(id);
 
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Order ${id} is already ${order.status} and cannot be rejected`,
+      );
+    }
+
     order.status = OrderStatus.REJECTED;
     order.processedAt = new Date();
     await this.sellerOrderRepository.save(order);
 
-    this.logger.log(`Order ${order.orderId} manually rejected`);
+    this.logger.log(`Order ${order.orderId} rejected`);
 
-    // Reject message in RabbitMQ (delete from queue without requeue)
+    // NACK the RabbitMQ message (remove from queue without requeue)
     await this.rabbitMQConsumer.rejectOrder(order.orderId);
 
     return order;
   }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 }
-
