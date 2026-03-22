@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getDatabaseConfig } from './config/database.config';
 import { SellerModule } from './modules/seller/seller.module';
+import { ProductModule } from './modules/products/product.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { SellerModule } from './modules/seller/seller.module';
     }),
     TypeOrmModule.forRoot(getDatabaseConfig()),
     SellerModule,
+    ProductModule,
   ],
   controllers: [],
   providers: [],
