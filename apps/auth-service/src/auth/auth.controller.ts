@@ -11,8 +11,8 @@ import { AuthService } from '@/auth/auth.service'
 import { AppTag } from '@/config/tags.config'
 import { GetSelfDto } from '@/dto/get-self.dto'
 import { LoginDto } from '@/dto/login.dto'
-import { RegisterDto } from '@/dto/register.dto'
 import { type DecodedJwt } from '@/auth/auth'
+import { RegisterDto } from '@/dto/register.dto'
 
 @Controller('auth')
 @ApiTags(AppTag.Auth)
