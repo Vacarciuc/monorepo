@@ -34,30 +34,47 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
   private async connect(): Promise<void> {
     try {
       this.logger.log(`Connecting to RabbitMQ at ${this.config.url}`);
-
       this.connection = amqp.connect([this.config.url]);
 
-      this.connection.on('connect', () => {
-        this.logger.log('✅ Connected to RabbitMQ');
-      });
-
-      this.connection.on('disconnect', (err) => {
-        this.logger.error('❌ Disconnected from RabbitMQ', err);
-      });
-
+      // Combine EVERYTHING into the channel creation setup
       this.channelWrapper = this.connection.createChannel({
         setup: async (channel: ConfirmChannel) => {
-          await this.setupChannel(channel);
+          this.logger.log(`Setting up channel and queue: ${this.config.queue}`);
+
+          // 1. Assert Exchange
+          await channel.assertExchange(this.config.exchange, 'topic', { durable: true });
+
+          // 2. Assert Queue
+          await channel.assertQueue(this.config.queue, { durable: true });
+
+          // 3. Bind Queue
+          await channel.bindQueue(
+            this.config.queue,
+            this.config.exchange,
+            this.config.routingKey,
+          );
+
+          // 4. START CONSUMING HERE (Inside the same setup block)
+          await channel.consume(
+            this.config.queue,
+            async (msg: ConsumeMessage | null) => {
+              if (msg) {
+                await this.handleMessage(msg, channel);
+              }
+            },
+            { noAck: false },
+          );
+
+          this.logger.log(`✅ Queue ${this.config.queue} is bound and consuming.`);
         },
       });
 
-      await this.startConsuming();
+      // REMOVE this.startConsuming() from here!
     } catch (error) {
       this.logger.error('Failed to connect to RabbitMQ', error);
       throw error;
     }
   }
-
   private async setupChannel(channel: ConfirmChannel): Promise<void> {
     this.logger.log(`Setting up channel with exchange: ${this.config.exchange}`);
 

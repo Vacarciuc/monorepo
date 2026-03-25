@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import * as amqp from 'amqp-connection-manager';
 import { ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel } from 'amqplib';
@@ -29,6 +34,16 @@ export class RabbitMQProducer implements OnModuleInit, OnModuleDestroy {
           await channel.assertExchange(this.config.exchange, 'topic', {
             durable: true,
           });
+
+          await channel.assertQueue(this.config.queue, { durable: true });
+
+          await channel.bindQueue(
+            this.config.queue,
+            this.config.exchange,
+            this.config.routingKey,
+          );
+
+          this.logger.log(`Queue ${this.config.queue} is ready and bound.`);
         },
       });
 
@@ -70,4 +85,3 @@ export class RabbitMQProducer implements OnModuleInit, OnModuleDestroy {
     }
   }
 }
-
