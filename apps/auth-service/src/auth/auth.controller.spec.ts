@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing'
 
 import { AuthService } from '@/auth/auth.service'
-import { UserRole } from '@/auth/user-role.enum'
 import { LoginDto } from '@/dto/login.dto'
 import { RegisterDto } from '@/dto/register.dto'
 
 import { AuthController } from './auth.controller'
+import { UserRole } from '@/auth/user-role'
 
 describe('AuthController', () => {
   let controller: AuthController

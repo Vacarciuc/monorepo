@@ -11,8 +11,8 @@ import {
 } from '@nestjs/swagger'
 
 import { AuthGuard } from '@/auth/auth.guard'
-import { UserRole } from '@/auth/user-role.enum'
 import { AppRequest } from '@/types/app-request.types'
+import { UserRole } from '@/auth/user-role'
 
 export const IS_PUBLIC_DECORATOR_KEY = 'is_public'
 

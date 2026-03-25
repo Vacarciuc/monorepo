@@ -5,8 +5,8 @@ import {
   Index,
   PrimaryGeneratedColumn,
 } from 'typeorm'
+import { UserRole } from '@/auth/user-role'
 
-import { UserRole } from '@/auth/user-role.enum'
 
 @Entity('users')
 export class User {

@@ -1,53 +1,108 @@
-import { NestFactory } from '@nestjs/core';
-import { Logger, VersioningType } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
-import cookieParser from 'cookie-parser';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import { Logger, VersioningType } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { NestFactory } from "@nestjs/core";
+import { NestExpressApplication } from "@nestjs/platform-express";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { IncomingMessage, Server, ServerResponse } from "http";
 
-import { AppEnv } from '@/common/types/app-env.types';
-import { AppModule } from '@/app.module';
-import { urlencoded } from 'express';
-import multer from 'multer';
+import { AppModule } from "@/app.module";
+import { APP_TAGS } from "@/config/tags.config";
+import { AppEnv } from "@/types/app-env.types";
 
-async function bootstrap() {
-   const logger = new Logger(bootstrap.name, { timestamp: true });
-   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-      logger,
-   });
-   const config = app.get(ConfigService<AppEnv>);
-   const httpPort = config.get('HTTP_PORT');
-   const httpHost = config.get('HTTP_HOST');
+// HTTP server type
+export type AppServer = Server<typeof IncomingMessage, typeof ServerResponse>;
 
-   app.enableCors({
-      origin: ['http://localhost:3000'],
+// Nest Express wrapper
+export type AppType = NestExpressApplication<AppServer>;
+
+class App {
+  private nestApp: AppType;
+  private logger: Logger;
+  private config: ConfigService<AppEnv>;
+  private port: string;
+  private host: string;
+
+  constructor() {}
+
+  async launch() {
+    await this.init();
+    this.setupInternalConfig();
+    this.setupDocs();
+    await this.listen();
+  }
+
+  private async init() {
+    this.logger = new Logger(App.name, { timestamp: true });
+    this.nestApp = await NestFactory.create<NestExpressApplication>(AppModule, {
+      logger: this.logger,
+    });
+    this.config = this.nestApp.get(ConfigService<AppEnv>);
+    this.port = this.config.get("PORT")!;
+    this.host = this.config.get("HOST")!;
+  }
+
+  private setupInternalConfig() {
+    this.nestApp.use(
+      helmet({
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        hsts: false,
+        contentSecurityPolicy: {
+          directives: {
+            upgradeInsecureRequests: null,
+          },
+        },
+      }),
+    );
+    this.nestApp.enableCors({
+      origin: this.config.get("CORS_ORIGIN")!.split(","),
+      allowedHeaders: this.config.get("CORS_HEADERS")!.split(","),
+      methods: this.config.get("CORS_METHODS")!.split(","),
       credentials: true,
-      // methods: ['GET', 'POST', 'OPTIONS', 'PATCH', 'PUT', 'DELETE']
-   });
-   app.setGlobalPrefix('/api');
-   app.enableVersioning({
+    });
+    this.nestApp.setGlobalPrefix("/api");
+    this.nestApp.enableVersioning({
       type: VersioningType.URI,
-      prefix: 'v',
-      defaultVersion: '1',
-   });
-   app.set('query parser', 'extended');
-   app.use(cookieParser());
+      prefix: "v",
+      defaultVersion: "1",
+    });
+    this.nestApp.set("query parser", "extended"); // qs
+    this.nestApp.use(cookieParser());
+  }
 
-   const swaggerConfig = new DocumentBuilder()
-      .setTitle('CarHive Gateway')
-      .setVersion('1.0.0')
-      .build();
+  private setupDocs() {
+    let swaggerConfig = new DocumentBuilder()
+      .setTitle("Gateway")
+      .setVersion("0.0.1")
+      .addBearerAuth();
 
-   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-   SwaggerModule.setup('/docs', app, swaggerDocument, {
-      jsonDocumentUrl: '/docs/swagger.json',
-      customSiteTitle: 'Gateway docs',
+    APP_TAGS.forEach((tag) => {
+      swaggerConfig = swaggerConfig.addTag(...tag);
+    });
+
+    const swaggerDocument = SwaggerModule.createDocument(
+      this.nestApp,
+      swaggerConfig.build(),
+    );
+
+    SwaggerModule.setup("/docs", this.nestApp, swaggerDocument, {
+      jsonDocumentUrl: "/docs/swagger.json",
+      customSiteTitle: "Gateway docs",
       useGlobalPrefix: true,
-   });
+    });
+  }
 
-   await app.listen(httpPort, httpHost, () =>
-      logger.log(`HTTP listening to ${httpHost}:${httpPort}`),
-   );
+  private async listen() {
+    const server: AppServer = await this.nestApp.listen(
+      this.port,
+      this.host,
+      () => {
+        this.logger.log(`HTTP listening to ${this.host}:${this.port}`);
+      },
+    );
+  }
 }
 
-bootstrap();
+const app = new App();
+app.launch();

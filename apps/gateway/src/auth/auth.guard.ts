@@ -3,13 +3,12 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
-} from '@nestjs/common'
-import { Reflector } from '@nestjs/core'
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 
-import { AppRequest } from '@/types/app-request.types'
-
-import { IS_PUBLIC_DECORATOR_KEY } from '@/auth/auth.decorator'
-import { AuthService } from './auth.service'
+import { AuthService } from "@/auth/auth.service";
+import { AppRequest } from "@/types/app-request.types";
+import { IS_PUBLIC_DECORATOR_KEY } from "@/auth/auth.decorator";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -28,6 +27,7 @@ export class AuthGuard implements CanActivate {
         IS_PUBLIC_DECORATOR_KEY,
         [context.getHandler(), context.getClass()],
       )
+      console.log(isPublic)
       if (isPublic) {
         return true
       }
@@ -35,7 +35,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('no token provided')
     }
 
-    const decodedJwt = await this.authService.validateToken(token)
+    const decodedJwt = await this.authService.validate(token)
     if (!decodedJwt) {
       throw new UnauthorizedException('token validation failed')
     }
