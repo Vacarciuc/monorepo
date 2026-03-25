@@ -9,8 +9,7 @@ services:
       - "5432:5432"
     volumes: [auth-db-data:/var/lib/postgresql/data]
     networks: [marketplace-network]
-    healthcheck:
-      &pg-healthcheck
+    healthcheck: &pg-healthcheck
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 3s
@@ -42,12 +41,17 @@ services:
       auth-db:
         condition: service_started
     networks: [marketplace-network]
-    healthcheck:
-      &node-healthcheck
-      test: [
-        "CMD", "curl", "-X", "GET", "http://localhost:3000/api/v1/health",
-        "-H", "accept: application/json"
-      ]
+    healthcheck: &node-healthcheck
+      test:
+        [
+          "CMD",
+          "curl",
+          "-X",
+          "GET",
+          "http://localhost:3000/api/v1/health",
+          "-H",
+          "accept: application/json",
+        ]
       interval: 10s
       timeout: 1s
       retries: 2
@@ -120,6 +124,44 @@ services:
     depends_on:
       - order-db
     networks: [marketplace-network]
+
+  seller-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${SELLER_SERVICE_DB_USER}
+      POSTGRES_PASSWORD: ${SELLER_SERVICE_DB_PASSWORD}
+      POSTGRES_DB: ${SELLER_SERVICE_DB_NAME}
+    ports:
+      - "5434:5432"
+    volumes: [seller-db-data:/var/lib/postgresql/data]
+    networks: [marketplace-network]
+    healthcheck: *pg-healthcheck
+
+  seller-service:
+    build:
+      context: ./apps/seller-service
+      dockerfile: Dockerfile.dev
+    env_file: ./apps/seller-service/.env.development
+    init: true
+    ports:
+      - "3003:3000"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/seller-service/src/
+          target: /app/src/
+        - action: rebuild
+          path: ./apps/seller-service/package.json
+        - action: sync+restart
+          path: ./apps/seller-service/nest-cli.json
+          target: /app/nest-cli.json
+    depends_on:
+      seller-db:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    networks: [marketplace-network]
+    healthcheck: *node-healthcheck
 
 volumes:
   auth-db-data:

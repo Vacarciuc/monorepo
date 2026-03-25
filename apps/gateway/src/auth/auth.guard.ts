@@ -27,7 +27,6 @@ export class AuthGuard implements CanActivate {
         IS_PUBLIC_DECORATOR_KEY,
         [context.getHandler(), context.getClass()],
       )
-      console.log(isPublic)
       if (isPublic) {
         return true
       }

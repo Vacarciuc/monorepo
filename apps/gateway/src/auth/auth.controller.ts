@@ -45,7 +45,6 @@ export class AuthController {
   async getSelf(
     @RequestUser() token: string,
   ): ReturnType<AuthService["getSelf"]> {
-    console.log(token);
     return this.authService.getSelf(token);
   }
 }
