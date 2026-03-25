@@ -45,3 +45,6 @@ coverage/
 
 # Optional REPL history
 .node_repl_history
+
+#products
+./apps/seller-service/uploads/products
