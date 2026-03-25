@@ -4,7 +4,7 @@
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
     "esModuleInterop": true,
-    "isolatedModules": false,
+    "isolatedModules": true,
     "noEmit": false,
     "noEmitOnError": false,
     "noEmitHelpers": false,

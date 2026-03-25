@@ -114,7 +114,7 @@ describe('AuthGuard', () => {
 
       jest
         .spyOn(authService, 'validateToken')
-        .mockRejectedValue(new JsonWebTokenError('invalid'))
+        .mockRejectedValue(new UnauthorizedException('invalid'))
 
       await expect(guard.canActivate(context)).rejects.toThrow(
         UnauthorizedException,

@@ -12,7 +12,7 @@ import { AppTag } from '@/config/tags.config'
 import { GetSelfDto } from '@/dto/get-self.dto'
 import { LoginDto } from '@/dto/login.dto'
 import { RegisterDto } from '@/dto/register.dto'
-import { DecodedJwt } from '@/auth/auth'
+import { type DecodedJwt } from '@/auth/auth'
 
 @Controller('auth')
 @ApiTags(AppTag.Auth)
