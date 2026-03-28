@@ -116,7 +116,7 @@ services:
   order-service:
     build:
       context: ./apps/order-service
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     env_file: [./apps/order-service/.env.development]
     init: true
     ports:
