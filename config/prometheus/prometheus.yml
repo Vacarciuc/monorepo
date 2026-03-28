@@ -14,6 +14,12 @@ scrape_configs:
         - auth-service:3000
     metrics_path: /api/v1/metrics
 
+  - job_name: gateway
+    static_configs:
+      - targets:
+        - gateway:3000
+    metrics_path: /api/v1/metrics
+
   - job_name: auth-db
     static_configs:
       - targets:
@@ -28,8 +34,3 @@ scrape_configs:
     static_configs:
       - targets:
         - order-db-exporter:9187
-
-  - job_name: gateway
-    static_configs:
-      - targets:
-        - gateway:3000
