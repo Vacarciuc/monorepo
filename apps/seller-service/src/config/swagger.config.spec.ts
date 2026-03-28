@@ -27,4 +27,3 @@ describe('SwaggerConfig', () => {
     expect(app).toBeDefined();
   });
 });
-

@@ -69,4 +69,3 @@ export class OrderCreatedEvent {
   @IsNumber()
   totalPrice: number;
 }
-

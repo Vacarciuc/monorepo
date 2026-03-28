@@ -12,4 +12,3 @@ import { SeedService } from '../../database/seed.service';
   exports: [ProductService],
 })
 export class ProductModule {}
-

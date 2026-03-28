@@ -1,4 +1,11 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy, forwardRef, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
 import * as amqp from 'amqp-connection-manager';
 import { ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
@@ -16,7 +23,10 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
   private readonly config = getRabbitMQConfig();
 
   // Store messages waiting for manual confirmation
-  private pendingMessages = new Map<string, { msg: ConsumeMessage; channel: ConfirmChannel }>();
+  private pendingMessages = new Map<
+    string,
+    { msg: ConsumeMessage; channel: ConfirmChannel }
+  >();
 
   constructor(
     @Inject(forwardRef(() => SellerService))
@@ -42,7 +52,9 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
           this.logger.log(`Setting up channel and queue: ${this.config.queue}`);
 
           // 1. Assert Exchange
-          await channel.assertExchange(this.config.exchange, 'topic', { durable: true });
+          await channel.assertExchange(this.config.exchange, 'topic', {
+            durable: true,
+          });
 
           // 2. Assert Queue
           await channel.assertQueue(this.config.queue, { durable: true });
@@ -65,7 +77,9 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
             { noAck: false },
           );
 
-          this.logger.log(`✅ Queue ${this.config.queue} is bound and consuming.`);
+          this.logger.log(
+            `✅ Queue ${this.config.queue} is bound and consuming.`,
+          );
         },
       });
 
@@ -76,7 +90,9 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
     }
   }
   private async setupChannel(channel: ConfirmChannel): Promise<void> {
-    this.logger.log(`Setting up channel with exchange: ${this.config.exchange}`);
+    this.logger.log(
+      `Setting up channel with exchange: ${this.config.exchange}`,
+    );
 
     // Declare exchange
     await channel.assertExchange(this.config.exchange, 'topic', {
@@ -140,7 +156,9 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
 
       // Store message for later acknowledgment (when manually confirmed)
       this.pendingMessages.set(event.orderId, { msg, channel });
-      this.logger.log(`Message stored for order ${event.orderId}, waiting for manual confirmation`);
+      this.logger.log(
+        `Message stored for order ${event.orderId}, waiting for manual confirmation`,
+      );
     } catch (error) {
       this.logger.error('Error handling message', error);
       channel.nack(msg, false, true); // Requeue on error
@@ -181,4 +199,3 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
     }
   }
 }
-

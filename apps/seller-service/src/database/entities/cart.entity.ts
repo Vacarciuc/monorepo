@@ -24,7 +24,10 @@ export class Cart {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ApiProperty({ description: 'Customer identifier (sub from JWT)', format: 'uuid' })
+  @ApiProperty({
+    description: 'Customer identifier (sub from JWT)',
+    format: 'uuid',
+  })
   @Column({ type: 'varchar', name: 'customer_id', unique: true })
   customerId: string;
 
@@ -38,4 +41,3 @@ export class Cart {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

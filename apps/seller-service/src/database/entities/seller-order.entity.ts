@@ -19,11 +19,18 @@ export class SellerOrder {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ApiProperty({ description: 'Original order ID from the order service', format: 'uuid' })
+  @ApiProperty({
+    description: 'Original order ID from the order service',
+    format: 'uuid',
+  })
   @Column('uuid')
   orderId: string;
 
-  @ApiProperty({ description: 'Current status of the order', enum: OrderStatus, default: OrderStatus.PENDING })
+  @ApiProperty({
+    description: 'Current status of the order',
+    enum: OrderStatus,
+    default: OrderStatus.PENDING,
+  })
   @Column({ type: 'varchar', enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
 
@@ -35,7 +42,10 @@ export class SellerOrder {
   @Column({ type: 'jsonb', nullable: true, default: '[]' })
   orderItems: OrderItem[];
 
-  @ApiProperty({ description: 'Timestamp when the order was processed', nullable: true })
+  @ApiProperty({
+    description: 'Timestamp when the order was processed',
+    nullable: true,
+  })
   @Column({ type: 'timestamp', nullable: true })
   processedAt: Date;
 
@@ -43,4 +53,3 @@ export class SellerOrder {
   @CreateDateColumn()
   createdAt: Date;
 }
-

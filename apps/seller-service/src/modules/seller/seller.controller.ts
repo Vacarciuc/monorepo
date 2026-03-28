@@ -143,4 +143,3 @@ export class SellerController {
     return this.sellerService.rejectOrder(id);
   }
 }
-

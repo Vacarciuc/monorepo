@@ -3,12 +3,12 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
-} from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
+} from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
 
-import { AuthService } from "@/auth/auth.service";
-import { AppRequest } from "@/types/app-request.types";
-import { IS_PUBLIC_DECORATOR_KEY } from "@/auth/auth.decorator";
+import { IS_PUBLIC_DECORATOR_KEY } from '@/auth/auth.decorator'
+import { AuthService } from '@/auth/auth.service'
+import { AppRequest } from '@/types/app-request.types'
 
 @Injectable()
 export class AuthGuard implements CanActivate {

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { Exclude, Expose } from 'class-transformer'
-import { UserRole } from '@/auth/user-role'
 
+import { UserRole } from '@/auth/user-role'
 
 @Exclude()
 export class UserDto {

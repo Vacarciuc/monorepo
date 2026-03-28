@@ -8,7 +8,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { SellerOrder, OrderStatus } from '../../database/entities/seller-order.entity';
+import {
+  SellerOrder,
+  OrderStatus,
+} from '../../database/entities/seller-order.entity';
 import { Product } from '../../database/entities/product.entity';
 import { OrderCreatedEvent } from '../../dto/order-created.event';
 import { RabbitMQConsumer } from '../../messaging/rabbitmq.consumer';

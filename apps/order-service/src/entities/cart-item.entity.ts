@@ -1,25 +1,32 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
-import { Product } from './product.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm'
+
+import { Product } from './product.entity'
 
 @Entity('cart_items')
 export class CartItem {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string
 
   @Column('uuid')
-  user_id: string;
+  user_id: string
 
   @Column('uuid')
-  product_id: string;
+  product_id: string
 
   @Column('int')
-  quantity: number;
+  quantity: number
 
   @ManyToOne(() => Product)
   @JoinColumn({ name: 'product_id' })
-  product: Product;
+  product: Product
 
   @CreateDateColumn()
-  created_at: Date;
+  created_at: Date
 }
-

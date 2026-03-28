@@ -209,8 +209,12 @@ describe('Swagger Documentation (E2E)', () => {
       const getOrderByIdResponse =
         openApiSpec.paths['/seller/orders/{id}'].get.responses['200'];
 
-      expect(getOrdersResponse.content['application/json'].schema).toBeDefined();
-      expect(getOrderByIdResponse.content['application/json'].schema).toBeDefined();
+      expect(
+        getOrdersResponse.content['application/json'].schema,
+      ).toBeDefined();
+      expect(
+        getOrderByIdResponse.content['application/json'].schema,
+      ).toBeDefined();
     });
   });
 
@@ -232,4 +236,3 @@ describe('Swagger Documentation (E2E)', () => {
     });
   });
 });
-

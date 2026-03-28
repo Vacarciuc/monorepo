@@ -12,4 +12,3 @@ import { Product } from '../../database/entities/product.entity';
   exports: [CartService],
 })
 export class CartModule {}
-

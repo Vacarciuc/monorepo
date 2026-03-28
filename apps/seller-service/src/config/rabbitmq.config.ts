@@ -13,4 +13,3 @@ export const getRabbitMQConfig = (): RabbitMQConfig => ({
   queue: process.env.RABBITMQ_QUEUE!,
   routingKey: process.env.RABBITMQ_QUEUE_ROUTING_KEY!,
 });
-

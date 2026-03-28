@@ -6,7 +6,7 @@ export function setupSwagger(app: INestApplication): void {
     .setTitle('Seller Service API')
     .setDescription(
       'Microservice for processing orders from RabbitMQ queue. ' +
-      'Automatically processes orders and publishes results back to the message broker.',
+        'Automatically processes orders and publishes results back to the message broker.',
     )
     .setVersion('1.0.0')
     .addTag('seller-orders', 'Order processing and management operations')
@@ -20,4 +20,3 @@ export function setupSwagger(app: INestApplication): void {
     customCss: '.swagger-ui .topbar { display: none }',
   });
 }
-

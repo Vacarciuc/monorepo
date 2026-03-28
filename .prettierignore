@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store/
+.git/
+apps/*/dist/
+apps/*/build/
+
+package-lock.json
+pnpm-lock.yaml

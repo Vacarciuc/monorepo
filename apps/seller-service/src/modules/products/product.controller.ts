@@ -48,7 +48,9 @@ const multerOptions = {
     // Only allow image files
     if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
       return callback(
-        new BadRequestException('Only image files (jpg, jpeg, png, gif, webp) are allowed!'),
+        new BadRequestException(
+          'Only image files (jpg, jpeg, png, gif, webp) are allowed!',
+        ),
         false,
       );
     }
@@ -124,7 +126,10 @@ export class ProductController {
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<ProductResponseDto> {
     const imagePath = file ? `/uploads/products/${file.filename}` : undefined;
-    const product = await this.productService.createProduct(createProductDto, imagePath);
+    const product = await this.productService.createProduct(
+      createProductDto,
+      imagePath,
+    );
     return ProductResponseDto.fromEntity(product);
   }
 
@@ -237,7 +242,11 @@ export class ProductController {
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<ProductResponseDto> {
     const imagePath = file ? `/uploads/products/${file.filename}` : undefined;
-    const product = await this.productService.updateProduct(id, updateProductDto, imagePath);
+    const product = await this.productService.updateProduct(
+      id,
+      updateProductDto,
+      imagePath,
+    );
     return ProductResponseDto.fromEntity(product);
   }
 
@@ -269,4 +278,3 @@ export class ProductController {
     return this.productService.deleteProduct(id);
   }
 }
-

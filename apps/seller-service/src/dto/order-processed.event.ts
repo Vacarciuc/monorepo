@@ -19,4 +19,3 @@ export class OrderProcessedEvent {
   @IsEnum(OrderStatus)
   status: OrderStatus;
 }
-

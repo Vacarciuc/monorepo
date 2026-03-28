@@ -1,5 +1,4 @@
-import { HttpService } from "@nestjs/axios";
-import { firstValueFrom } from "rxjs";
+import { HttpService } from '@nestjs/axios'
 import {
   BadRequestException,
   ConflictException,
@@ -15,8 +14,9 @@ import {
   RequestTimeoutException,
   UnauthorizedException,
   UnsupportedMediaTypeException,
-} from "@nestjs/common";
-import { AxiosError, AxiosRequestConfig, isAxiosError } from "axios";
+} from '@nestjs/common'
+import { AxiosError, AxiosRequestConfig, isAxiosError } from 'axios'
+import { firstValueFrom } from 'rxjs'
 
 /** Handles requests that should be forwarded to a microservice */
 export abstract class BaseMicroserviceService {
@@ -29,28 +29,28 @@ export abstract class BaseMicroserviceService {
   protected async forwardRequest<TResponse>(
     config: AxiosRequestConfig,
   ): Promise<TResponse> {
-    this.logger.log(`${config.method} ${config.url}`);
+    this.logger.log(`${config.method} ${config.url}`)
     try {
-      const response$ = this.httpService.request<TResponse>(config);
-      const response = await firstValueFrom(response$);
-      return response.data;
+      const response$ = this.httpService.request<TResponse>(config)
+      const response = await firstValueFrom(response$)
+      return response.data
     } catch (err) {
       if (isAxiosError(err)) {
-        const axiosErr = err as AxiosError;
-        const status = axiosErr.response?.status;
-        const url = axiosErr.config?.url;
-        const method = axiosErr.config?.method?.toUpperCase();
-        const message = axiosErr.message;
+        const axiosErr = err as AxiosError
+        const status = axiosErr.response?.status
+        const url = axiosErr.config?.url
+        const method = axiosErr.config?.method?.toUpperCase()
+        const message = axiosErr.message
 
         this.logger.error(
           `AxiosError ${status} on ${method} ${url}: ${message}`,
-        );
+        )
       } else {
-        this.logger.error(`Unexpected error: ${(err as Error).message}`);
+        this.logger.error(`Unexpected error: ${(err as Error).message}`)
       }
 
-      this.throwIfAxiosClientError(err);
-      throw new InternalServerErrorException();
+      this.throwIfAxiosClientError(err)
+      throw new InternalServerErrorException()
     }
   }
 
@@ -58,9 +58,9 @@ export abstract class BaseMicroserviceService {
   protected async request<TResponse>(
     config: AxiosRequestConfig,
   ): Promise<TResponse> {
-    const response$ = this.httpService.request<TResponse>(config);
-    const response = await firstValueFrom(response$);
-    return response.data;
+    const response$ = this.httpService.request<TResponse>(config)
+    const response = await firstValueFrom(response$)
+    return response.data
   }
 
   private throwIfAxiosClientError(err: unknown): void {
@@ -70,33 +70,33 @@ export abstract class BaseMicroserviceService {
       err.response.status >= 400 &&
       err.response.status < 500
     ) {
-      const message = err.response?.data?.message;
+      const message = err.response?.data?.message
 
       switch (err.response.status) {
         case 400:
-          throw new BadRequestException(message);
+          throw new BadRequestException(message)
         case 401:
-          throw new UnauthorizedException(message);
+          throw new UnauthorizedException(message)
         case 403:
-          throw new ForbiddenException(message);
+          throw new ForbiddenException(message)
         case 404:
-          throw new NotFoundException(message);
+          throw new NotFoundException(message)
         case 405:
-          throw new MethodNotAllowedException(message);
+          throw new MethodNotAllowedException(message)
         case 406:
-          throw new NotAcceptableException(message);
+          throw new NotAcceptableException(message)
         case 408:
-          throw new RequestTimeoutException(message);
+          throw new RequestTimeoutException(message)
         case 409:
-          throw new ConflictException(message);
+          throw new ConflictException(message)
         case 410:
-          throw new GoneException(message);
+          throw new GoneException(message)
         case 413:
-          throw new PayloadTooLargeException(message);
+          throw new PayloadTooLargeException(message)
         case 415:
-          throw new UnsupportedMediaTypeException(message);
+          throw new UnsupportedMediaTypeException(message)
         case 418:
-          throw new ImATeapotException(message);
+          throw new ImATeapotException(message)
       }
     }
   }

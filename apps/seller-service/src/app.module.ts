@@ -18,5 +18,3 @@ import { CartModule } from './modules/cart/cart.module';
   providers: [],
 })
 export class AppModule {}
-
-

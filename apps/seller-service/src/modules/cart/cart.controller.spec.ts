@@ -5,8 +5,12 @@ import { UnauthorizedException } from '@nestjs/common';
 
 // Build a minimal JWT with the given sub (no real signing needed for unit tests)
 function fakeToken(sub: string): string {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url');
-  const payload = Buffer.from(JSON.stringify({ sub, email: 'test@test.com' })).toString('base64url');
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString(
+    'base64url',
+  );
+  const payload = Buffer.from(
+    JSON.stringify({ sub, email: 'test@test.com' }),
+  ).toString('base64url');
   return `Bearer ${header}.${payload}.fakesig`;
 }
 
@@ -113,12 +117,20 @@ describe('CartController', () => {
 
   describe('addItem', () => {
     it('calls service.addItem with correct args', async () => {
-      const cart = makeCart([{ productId: 'p-1', quantity: 2, price: 10, name: 'Tea' }]);
+      const cart = makeCart([
+        { productId: 'p-1', quantity: 2, price: 10, name: 'Tea' },
+      ]);
       mockService.addItem.mockResolvedValue(cart);
 
-      const result = await controller.addItem(AUTH, { productId: 'p-1', quantity: 2 });
+      const result = await controller.addItem(AUTH, {
+        productId: 'p-1',
+        quantity: 2,
+      });
 
-      expect(mockService.addItem).toHaveBeenCalledWith(CUSTOMER, { productId: 'p-1', quantity: 2 });
+      expect(mockService.addItem).toHaveBeenCalledWith(CUSTOMER, {
+        productId: 'p-1',
+        quantity: 2,
+      });
       expect(result.items).toHaveLength(1);
     });
   });
@@ -127,12 +139,16 @@ describe('CartController', () => {
 
   describe('updateItem', () => {
     it('calls service.updateItem with correct args', async () => {
-      const cart = makeCart([{ productId: 'p-1', quantity: 5, price: 10, name: 'Tea' }]);
+      const cart = makeCart([
+        { productId: 'p-1', quantity: 5, price: 10, name: 'Tea' },
+      ]);
       mockService.updateItem.mockResolvedValue(cart);
 
       const result = await controller.updateItem(AUTH, 'p-1', { quantity: 5 });
 
-      expect(mockService.updateItem).toHaveBeenCalledWith(CUSTOMER, 'p-1', { quantity: 5 });
+      expect(mockService.updateItem).toHaveBeenCalledWith(CUSTOMER, 'p-1', {
+        quantity: 5,
+      });
       expect(result.items[0].quantity).toBe(5);
     });
   });
@@ -183,5 +199,3 @@ describe('CartController', () => {
     });
   });
 });
-
-

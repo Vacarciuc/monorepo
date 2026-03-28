@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SellerController } from './seller.controller';
 import { SellerService } from './seller.service';
-import { SellerOrder, OrderStatus } from '../../database/entities/seller-order.entity';
+import {
+  SellerOrder,
+  OrderStatus,
+} from '../../database/entities/seller-order.entity';
 
 describe('SellerController', () => {
   let controller: SellerController;
@@ -120,4 +123,3 @@ describe('SellerController', () => {
     });
   });
 });
-

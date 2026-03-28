@@ -6,12 +6,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger'
 
+import { type DecodedJwt } from '@/auth/auth'
 import { Public, RequestToken } from '@/auth/auth.decorator'
 import { AuthService } from '@/auth/auth.service'
 import { AppTag } from '@/config/tags.config'
 import { GetSelfDto } from '@/dto/get-self.dto'
 import { LoginDto } from '@/dto/login.dto'
-import { type DecodedJwt } from '@/auth/auth'
 import { RegisterDto } from '@/dto/register.dto'
 
 @Controller('auth')

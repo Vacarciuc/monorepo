@@ -1,9 +1,10 @@
-import { SetMetadata } from "@nestjs/common";
-import { UserRole } from "@/auth/user-role";
+import { SetMetadata } from '@nestjs/common'
 
-export const ROLE_METADATA_KEY = "role";
+import { UserRole } from '@/auth/user-role'
 
-export const RoleHierarchy = [UserRole.User];
+export const ROLE_METADATA_KEY = 'role'
+
+export const RoleHierarchy = [UserRole.User]
 
 // Role auth decorator
-export const Role = (role: UserRole) => SetMetadata(ROLE_METADATA_KEY, role);
+export const Role = (role: UserRole) => SetMetadata(ROLE_METADATA_KEY, role)

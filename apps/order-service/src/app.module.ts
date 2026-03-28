@@ -1,15 +1,16 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ProductsModule } from './products/products.module';
-import { CartModule } from './cart/cart.module';
-import { OrdersModule } from './orders/orders.module';
-import { Product } from './entities/product.entity';
-import { CartItem } from './entities/cart-item.entity';
-import { Order } from './entities/order.entity';
-import { OrderItem } from './entities/order-item.entity';
-import { OutboxEvent } from './entities/outbox-event.entity';
-import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { Module } from '@nestjs/common'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { TypeOrmModule } from '@nestjs/typeorm'
+
+import { CartModule } from './cart/cart.module'
+import { CartItem } from './entities/cart-item.entity'
+import { OrderItem } from './entities/order-item.entity'
+import { Order } from './entities/order.entity'
+import { OutboxEvent } from './entities/outbox-event.entity'
+import { Product } from './entities/product.entity'
+import { OrdersModule } from './orders/orders.module'
+import { ProductsModule } from './products/products.module'
+import { RabbitMQModule } from './rabbitmq/rabbitmq.module'
 
 @Module({
   imports: [
@@ -20,11 +21,11 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('ORDER_SERVICE_DB_HOST', ),
-        port: configService.get('ORDER_SERVICE_DB_PORT', ),
-        username: configService.get('ORDER_SERVICE_DB_USER', ),
-        password: configService.get('ORDER_SERVICE_DB_PASSWORD', ),
-        database: configService.get('ORDER_SERVICE_DB_NAME',),
+        host: configService.get('ORDER_SERVICE_DB_HOST'),
+        port: configService.get('ORDER_SERVICE_DB_PORT'),
+        username: configService.get('ORDER_SERVICE_DB_USER'),
+        password: configService.get('ORDER_SERVICE_DB_PASSWORD'),
+        database: configService.get('ORDER_SERVICE_DB_NAME'),
         entities: [Product, CartItem, Order, OrderItem, OutboxEvent],
         synchronize: true,
       }),
@@ -37,5 +38,3 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
   ],
 })
 export class AppModule {}
-
-

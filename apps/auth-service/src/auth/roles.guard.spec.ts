@@ -2,9 +2,9 @@ import { ExecutionContext } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Test, TestingModule } from '@nestjs/testing'
 
+import { UserRole } from '@/auth/user-role'
 
 import { RolesGuard } from './roles.guard'
-import { UserRole } from '@/auth/user-role'
 
 describe('RolesGuard', () => {
   let guard: RolesGuard
