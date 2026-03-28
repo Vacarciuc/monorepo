@@ -204,7 +204,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./config/prometheus/:/etc/prometheus/
+      - ./config/prometheus/dev/:/etc/prometheus/
       - prometheus-data:/prometheus
     networks: [ marketplace-network ]
 
