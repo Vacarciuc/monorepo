@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 1s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+        - localhost:9090
+
+  - job_name: auth-service
+    static_configs:
+      - targets:
+        - auth-service:3000
+    metrics_path: /api/v1/metrics
+
+  - job_name: auth-db
+    static_configs:
+      - targets:
+        - auth-db-exporter:9187
+
+  - job_name: seller-db
+    static_configs:
+      - targets:
+        - seller-db-exporter:9187
+
+  - job_name: order-db
+    static_configs:
+      - targets:
+        - order-db-exporter:9187
+
+  - job_name: gateway
+    static_configs:
+      - targets:
+        - gateway:3000

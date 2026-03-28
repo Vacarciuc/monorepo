@@ -15,6 +15,18 @@ services:
       timeout: 3s
       retries: 3
 
+  auth-db-exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks: [marketplace-network]
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    restart: always
+
   auth-service:
     build:
       context: ./apps/auth-service
@@ -113,6 +125,18 @@ services:
     networks: [marketplace-network]
     healthcheck: *pg-healthcheck
 
+  order-db-exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${ORDER_SERVICE_DB_USER}:${ORDER_SERVICE_DB_PASSWORD}@order-db:5432/${ORDER_SERVICE_DB_NAME}?sslmode=disable"
+    ports:
+      - "9188:9187"
+    networks: [marketplace-network]
+    depends_on:
+      order-db:
+        condition: service_healthy
+    restart: always
+
   order-service:
     build:
       context: ./apps/order-service
@@ -136,6 +160,18 @@ services:
     volumes: [seller-db-data:/var/lib/postgresql/data]
     networks: [marketplace-network]
     healthcheck: *pg-healthcheck
+
+  seller-db-exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${SELLER_SERVICE_DB_USER}:${SELLER_SERVICE_DB_PASSWORD}@seller-db:5432/${SELLER_SERVICE_DB_NAME}?sslmode=disable"
+    ports:
+      - "9189:9187"
+    networks: [marketplace-network]
+    depends_on:
+      seller-db:
+        condition: service_healthy
+    restart: always
 
   seller-service:
     build:
@@ -163,11 +199,33 @@ services:
     networks: [marketplace-network]
     healthcheck: *node-healthcheck
 
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/:/etc/prometheus/
+      - prometheus-data:/prometheus
+    networks: [ marketplace-network ]
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "10000:3000"
+    volumes: [ grafana-data:/var/lib/grafana/ ]
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    depends_on: [ prometheus ]
+    networks: [ marketplace-network ]
+
 volumes:
   auth-db-data:
   order-db-data:
   rabbitmq-data:
   seller-db-data:
+  prometheus-data:
+  grafana-data:
 
 networks:
   marketplace-network:

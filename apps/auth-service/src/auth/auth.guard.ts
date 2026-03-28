@@ -24,11 +24,10 @@ export class AuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request)
 
     if (!token) {
-      const isPublic = this.reflector.getAllAndOverride<boolean>(
-        IS_PUBLIC_DECORATOR_KEY,
-        [context.getHandler(), context.getClass()],
-      )
-      if (isPublic) {
+      const isPublic = this.reflector.getAllAndOverride<
+        boolean | undefined | null
+      >(IS_PUBLIC_DECORATOR_KEY, [context.getHandler(), context.getClass()])
+      if (isPublic === true || isPublic === undefined || isPublic === null) {
         return true
       }
 
