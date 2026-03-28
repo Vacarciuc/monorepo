@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 
+import { IS_PUBLIC_DECORATOR_KEY } from '@/auth/auth.decorator'
 import { AppRequest } from '@/types/app-request.types'
 
-import { IS_PUBLIC_DECORATOR_KEY } from '@/auth/auth.decorator'
 import { AuthService } from './auth.service'
 
 @Injectable()

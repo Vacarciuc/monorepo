@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+} from 'typeorm'
 
 export enum OutboxEventType {
   ORDER_CREATED = 'ORDER_CREATED',
@@ -7,23 +13,22 @@ export enum OutboxEventType {
 @Entity('outbox_events')
 export class OutboxEvent {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string
 
   @Index()
   @Column({ type: 'varchar' })
-  type: OutboxEventType;
+  type: OutboxEventType
 
   @Column({ type: 'varchar' })
-  routing_key: string;
+  routing_key: string
 
   @Column({ type: 'jsonb' })
-  payload: Record<string, any>;
+  payload: Record<string, any>
 
   @Index()
   @Column({ type: 'timestamptz', nullable: true })
-  published_at: Date | null;
+  published_at: Date | null
 
   @CreateDateColumn({ type: 'timestamptz' })
-  created_at: Date;
+  created_at: Date
 }
-

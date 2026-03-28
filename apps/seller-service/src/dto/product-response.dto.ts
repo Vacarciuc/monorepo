@@ -14,7 +14,11 @@ export class ProductResponseDto {
   @ApiProperty({ description: 'Product price', minimum: 0 })
   price: number;
 
-  @ApiProperty({ description: 'Available stock quantity', minimum: 0, default: 0 })
+  @ApiProperty({
+    description: 'Available stock quantity',
+    minimum: 0,
+    default: 0,
+  })
   quantity: number;
 
   @ApiPropertyOptional({ description: 'Image URL path' })
@@ -47,4 +51,3 @@ export class ProductResponseDto {
     return products.map((p) => ProductResponseDto.fromEntity(p));
   }
 }
-

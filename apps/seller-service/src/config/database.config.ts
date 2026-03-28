@@ -14,4 +14,3 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => ({
   synchronize: true,
   logging: process.env.NODE_ENV === 'development',
 });
-

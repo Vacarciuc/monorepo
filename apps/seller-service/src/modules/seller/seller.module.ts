@@ -13,4 +13,3 @@ import { RabbitMQConsumer } from '../../messaging/rabbitmq.consumer';
   exports: [SellerService],
 })
 export class SellerModule {}
-

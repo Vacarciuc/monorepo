@@ -65,7 +65,9 @@ describe('CartService', () => {
 
       const result = await service.getCart(CUSTOMER);
 
-      expect(mockCartRepo.findOne).toHaveBeenCalledWith({ where: { customerId: CUSTOMER } });
+      expect(mockCartRepo.findOne).toHaveBeenCalledWith({
+        where: { customerId: CUSTOMER },
+      });
       expect(result).toEqual(cart);
     });
 
@@ -77,7 +79,10 @@ describe('CartService', () => {
 
       const result = await service.getCart(CUSTOMER);
 
-      expect(mockCartRepo.create).toHaveBeenCalledWith({ customerId: CUSTOMER, items: [] });
+      expect(mockCartRepo.create).toHaveBeenCalledWith({
+        customerId: CUSTOMER,
+        items: [],
+      });
       expect(result.items).toEqual([]);
     });
   });
@@ -88,13 +93,18 @@ describe('CartService', () => {
     it('adds a new item to an empty cart', async () => {
       const product = makeProduct();
       const cart = makeCart();
-      const updatedCart = makeCart([{ productId: PRODUCT_ID, name: 'Green Tea', price: 24.99, quantity: 2 }]);
+      const updatedCart = makeCart([
+        { productId: PRODUCT_ID, name: 'Green Tea', price: 24.99, quantity: 2 },
+      ]);
 
       mockProductRepo.findOne.mockResolvedValue(product);
       mockCartRepo.findOne.mockResolvedValue(cart);
       mockCartRepo.save.mockResolvedValue(updatedCart);
 
-      const result = await service.addItem(CUSTOMER, { productId: PRODUCT_ID, quantity: 2 });
+      const result = await service.addItem(CUSTOMER, {
+        productId: PRODUCT_ID,
+        quantity: 2,
+      });
 
       expect(mockCartRepo.save).toHaveBeenCalled();
       expect(result.items).toHaveLength(1);
@@ -103,12 +113,17 @@ describe('CartService', () => {
 
     it('increases quantity for an existing item', async () => {
       const product = makeProduct({ quantity: 50 });
-      const cart = makeCart([{ productId: PRODUCT_ID, name: 'Green Tea', price: 24.99, quantity: 3 }]);
+      const cart = makeCart([
+        { productId: PRODUCT_ID, name: 'Green Tea', price: 24.99, quantity: 3 },
+      ]);
       mockProductRepo.findOne.mockResolvedValue(product);
       mockCartRepo.findOne.mockResolvedValue(cart);
       mockCartRepo.save.mockImplementation(async (c) => c);
 
-      const result = await service.addItem(CUSTOMER, { productId: PRODUCT_ID, quantity: 2 });
+      const result = await service.addItem(CUSTOMER, {
+        productId: PRODUCT_ID,
+        quantity: 2,
+      });
 
       // 3 existing + 2 new = 5
       expect(result.items[0].quantity).toBe(5);
@@ -136,7 +151,9 @@ describe('CartService', () => {
     it('throws BadRequestException when cart + new qty exceeds stock', async () => {
       const product = makeProduct({ quantity: 4 });
       // 3 already in cart, trying to add 3 more → 6 > 4
-      const cart = makeCart([{ productId: PRODUCT_ID, quantity: 3, price: 24.99, name: 'Green Tea' }]);
+      const cart = makeCart([
+        { productId: PRODUCT_ID, quantity: 3, price: 24.99, name: 'Green Tea' },
+      ]);
       mockProductRepo.findOne.mockResolvedValue(product);
       mockCartRepo.findOne.mockResolvedValue(cart);
 
@@ -151,29 +168,39 @@ describe('CartService', () => {
   describe('updateItem', () => {
     it('updates item quantity', async () => {
       const product = makeProduct({ quantity: 50 });
-      const cart = makeCart([{ productId: PRODUCT_ID, quantity: 2, price: 24.99, name: 'Green Tea' }]);
+      const cart = makeCart([
+        { productId: PRODUCT_ID, quantity: 2, price: 24.99, name: 'Green Tea' },
+      ]);
       mockCartRepo.findOne.mockResolvedValue(cart);
       mockProductRepo.findOne.mockResolvedValue(product);
       mockCartRepo.save.mockImplementation(async (c) => c);
 
-      const result = await service.updateItem(CUSTOMER, PRODUCT_ID, { quantity: 10 });
+      const result = await service.updateItem(CUSTOMER, PRODUCT_ID, {
+        quantity: 10,
+      });
 
       expect(result.items[0].quantity).toBe(10);
     });
 
     it('removes item when quantity is 0', async () => {
-      const cart = makeCart([{ productId: PRODUCT_ID, quantity: 2, price: 24.99, name: 'Green Tea' }]);
+      const cart = makeCart([
+        { productId: PRODUCT_ID, quantity: 2, price: 24.99, name: 'Green Tea' },
+      ]);
       mockCartRepo.findOne.mockResolvedValue(cart);
       mockCartRepo.save.mockImplementation(async (c) => c);
 
-      const result = await service.updateItem(CUSTOMER, PRODUCT_ID, { quantity: 0 });
+      const result = await service.updateItem(CUSTOMER, PRODUCT_ID, {
+        quantity: 0,
+      });
 
       expect(result.items).toHaveLength(0);
     });
 
     it('throws BadRequestException when new quantity exceeds stock', async () => {
       const product = makeProduct({ quantity: 5 });
-      const cart = makeCart([{ productId: PRODUCT_ID, quantity: 2, price: 24.99, name: 'Green Tea' }]);
+      const cart = makeCart([
+        { productId: PRODUCT_ID, quantity: 2, price: 24.99, name: 'Green Tea' },
+      ]);
       mockCartRepo.findOne.mockResolvedValue(cart);
       mockProductRepo.findOne.mockResolvedValue(product);
 
@@ -216,7 +243,9 @@ describe('CartService', () => {
 
   describe('clearCart', () => {
     it('empties all items', async () => {
-      const cart = makeCart([{ productId: PRODUCT_ID, quantity: 3, price: 24.99, name: 'Green Tea' }]);
+      const cart = makeCart([
+        { productId: PRODUCT_ID, quantity: 3, price: 24.99, name: 'Green Tea' },
+      ]);
       mockCartRepo.findOne.mockResolvedValue(cart);
       mockCartRepo.save.mockImplementation(async (c) => c);
 
@@ -231,8 +260,8 @@ describe('CartService', () => {
   describe('checkoutPayload', () => {
     it('returns correct payload with totalPrice', async () => {
       const cart = makeCart([
-        { productId: 'p1', quantity: 2, price: 10.00, name: 'Item A' },
-        { productId: 'p2', quantity: 1, price: 5.50, name: 'Item B' },
+        { productId: 'p1', quantity: 2, price: 10.0, name: 'Item A' },
+        { productId: 'p2', quantity: 1, price: 5.5, name: 'Item B' },
       ]);
       mockCartRepo.findOne.mockResolvedValue(cart);
 
@@ -240,7 +269,7 @@ describe('CartService', () => {
 
       expect(result.customerId).toBe(CUSTOMER);
       expect(result.items).toHaveLength(2);
-      expect(result.totalPrice).toBeCloseTo(25.50);
+      expect(result.totalPrice).toBeCloseTo(25.5);
       expect(result.createdAt).toBeDefined();
     });
 
@@ -248,7 +277,9 @@ describe('CartService', () => {
       const cart = makeCart([]);
       mockCartRepo.findOne.mockResolvedValue(cart);
 
-      await expect(service.checkoutPayload(CUSTOMER)).rejects.toThrow(BadRequestException);
+      await expect(service.checkoutPayload(CUSTOMER)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('rounds totalPrice to 2 decimal places', async () => {
@@ -263,4 +294,3 @@ describe('CartService', () => {
     });
   });
 });
-

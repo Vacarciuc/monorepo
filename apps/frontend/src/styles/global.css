@@ -46,12 +46,16 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, var(--off-white) 0%, var(--light-gray) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--off-white) 0%,
+    var(--light-gray) 100%
+  );
   color: var(--almost-black);
   line-height: 1.6;
   min-height: 100vh;
@@ -68,7 +72,11 @@ body {
    ==================================== */
 
 .navbar {
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-green) 0%,
+    var(--primary-green-light) 100%
+  );
   box-shadow: var(--shadow-md);
   position: sticky;
   top: 0;
@@ -199,7 +207,11 @@ body {
 }
 
 .home-button.primary {
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-green) 0%,
+    var(--primary-green-light) 100%
+  );
   color: var(--white);
   box-shadow: var(--shadow-md);
 }
@@ -379,7 +391,11 @@ body {
 .submit-button {
   flex: 1;
   padding: 0.875rem;
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-green) 0%,
+    var(--primary-green-light) 100%
+  );
   color: var(--white);
   border: none;
   border-radius: var(--radius-md);
@@ -537,8 +553,12 @@ body {
 }
 
 @keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .product-image.loaded + .product-image-skeleton,
@@ -579,7 +599,6 @@ body {
   }
 }
 
-
 .product-image {
   width: 100%;
   height: 100%;
@@ -592,7 +611,11 @@ body {
 }
 
 .product-card-header {
-  background: linear-gradient(135deg, var(--accent-green-lighter) 0%, var(--accent-green-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-green-lighter) 0%,
+    var(--accent-green-light) 100%
+  );
   padding: 1.5rem;
   text-align: center;
 }
@@ -633,7 +656,11 @@ body {
 .buy-button {
   width: 100%;
   padding: 0.875rem;
-  background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-green) 0%,
+    var(--accent-green-light) 100%
+  );
   color: var(--white);
   border: none;
   border-radius: var(--radius-md);
@@ -647,7 +674,11 @@ body {
 .buy-button:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-green) 0%,
+    var(--primary-green-light) 100%
+  );
 }
 
 .admin-actions {
@@ -669,7 +700,11 @@ body {
 }
 
 .edit-button {
-  background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-green) 0%,
+    var(--accent-green-light) 100%
+  );
   color: var(--white);
 }
 
@@ -847,7 +882,11 @@ body {
 
 .add-product-button {
   padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-green) 0%,
+    var(--primary-green-light) 100%
+  );
   color: var(--white);
   border: none;
   border-radius: var(--radius-md);
@@ -1377,5 +1416,3 @@ body {
   width: 100%;
   text-align: center;
 }
-
-

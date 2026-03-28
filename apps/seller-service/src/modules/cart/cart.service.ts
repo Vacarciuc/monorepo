@@ -88,8 +88,11 @@ export class CartService {
     if (dto.quantity === 0) {
       cart.items = cart.items.filter((i) => i.productId !== productId);
     } else {
-      const product = await this.productRepo.findOne({ where: { id: productId } });
-      if (!product) throw new NotFoundException(`Product ${productId} not found`);
+      const product = await this.productRepo.findOne({
+        where: { id: productId },
+      });
+      if (!product)
+        throw new NotFoundException(`Product ${productId} not found`);
 
       if (dto.quantity > product.quantity) {
         throw new BadRequestException(
@@ -98,7 +101,8 @@ export class CartService {
       }
 
       const existing = cart.items.find((i) => i.productId === productId);
-      if (!existing) throw new NotFoundException(`Item ${productId} not in cart`);
+      if (!existing)
+        throw new NotFoundException(`Item ${productId} not in cart`);
 
       existing.quantity = dto.quantity;
       // refresh price snapshot
@@ -150,4 +154,3 @@ export class CartService {
     };
   }
 }
-

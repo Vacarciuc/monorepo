@@ -67,10 +67,7 @@ export class CartController {
   @Post('items')
   @ApiOperation({ summary: 'Add item to cart (or increase quantity)' })
   @ApiResponse({ status: 200, description: 'Item added / quantity increased' })
-  addItem(
-    @Headers('authorization') auth: string,
-    @Body() dto: AddToCartDto,
-  ) {
+  addItem(@Headers('authorization') auth: string, @Body() dto: AddToCartDto) {
     const customerId = extractCustomerId(auth);
     return this.cartService.addItem(customerId, dto);
   }
@@ -116,4 +113,3 @@ export class CartController {
     return this.cartService.checkoutPayload(customerId);
   }
 }
-

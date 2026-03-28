@@ -9,11 +9,11 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 
+import { UserRole } from '@/auth/user-role'
 import { CryptoService } from '@/crypto/crypto.service'
 import { User } from '@/entities'
 
 import { AuthService } from './auth.service'
-import { UserRole } from '@/auth/user-role'
 
 describe('AuthService', () => {
   let service: AuthService

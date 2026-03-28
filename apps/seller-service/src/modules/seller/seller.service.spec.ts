@@ -2,20 +2,23 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SellerService } from './seller.service';
 import { Repository } from 'typeorm';
 import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
-import { SellerOrder, OrderStatus } from '../../database/entities/seller-order.entity';
+import {
+  SellerOrder,
+  OrderStatus,
+} from '../../database/entities/seller-order.entity';
 import { OrderCreatedEvent, OrderItem } from '../../dto/order-created.event';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { RabbitMQConsumer } from '../../messaging/rabbitmq.consumer';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-const makeEvent = (overrides: Partial<OrderCreatedEvent> = {}): OrderCreatedEvent => ({
+const makeEvent = (
+  overrides: Partial<OrderCreatedEvent> = {},
+): OrderCreatedEvent => ({
   orderId: '123e4567-e89b-12d3-a456-426614174000',
   sellerId: '223e4567-e89b-12d3-a456-426614174001',
   totalPrice: 100,
-  items: [
-    { productId: 'prod-1', quantity: 2, price: 50 },
-  ] as OrderItem[],
+  items: [{ productId: 'prod-1', quantity: 2, price: 50 }] as OrderItem[],
   ...overrides,
 });
 
@@ -40,10 +43,7 @@ const makeProduct = (overrides = {}) => ({
 
 // ─── DataSource / transaction mock ──────────────────────────────────────────
 
-const buildDataSourceMock = (
-  products: any[],
-  saveOrderResult: any,
-) => {
+const buildDataSourceMock = (products: any[], saveOrderResult: any) => {
   // em.getRepository(X) returns a tiny mock with save / createQueryBuilder
   const productRepoMock = {
     createQueryBuilder: jest.fn().mockReturnValue({
@@ -66,7 +66,9 @@ const buildDataSourceMock = (
   };
 
   return {
-    transaction: jest.fn().mockImplementation(async (_isolation, cb) => cb(emMock)),
+    transaction: jest
+      .fn()
+      .mockImplementation(async (_isolation, cb) => cb(emMock)),
     productRepoMock,
     orderRepoMock,
     emMock,
@@ -94,7 +96,9 @@ describe('SellerService', () => {
   };
 
   /** Re-creates the module with a fresh DataSource mock each test */
-  async function createModule(dsOverride?: Partial<ReturnType<typeof buildDataSourceMock>>) {
+  async function createModule(
+    dsOverride?: Partial<ReturnType<typeof buildDataSourceMock>>,
+  ) {
     const ds = dsOverride ?? buildDataSourceMock([], {});
     dataSourceMock = ds as ReturnType<typeof buildDataSourceMock>;
 
@@ -159,7 +163,9 @@ describe('SellerService', () => {
 
       const result = await service.findAllOrders();
 
-      expect(mockRepository.find).toHaveBeenCalledWith({ order: { createdAt: 'DESC' } });
+      expect(mockRepository.find).toHaveBeenCalledWith({
+        order: { createdAt: 'DESC' },
+      });
       expect(result).toEqual(orders);
     });
   });
@@ -173,13 +179,17 @@ describe('SellerService', () => {
 
       const result = await service.findOrderById(order.id);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: order.id } });
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { id: order.id },
+      });
       expect(result).toEqual(order);
     });
 
     it('throws NotFoundException when not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
-      await expect(service.findOrderById('ghost')).rejects.toThrow(NotFoundException);
+      await expect(service.findOrderById('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -189,7 +199,11 @@ describe('SellerService', () => {
     it('decrements stock, confirms order, and acks the RabbitMQ message', async () => {
       const product = makeProduct({ quantity: 10 });
       const order = makeOrder();
-      const confirmedOrder = { ...order, status: OrderStatus.CONFIRMED, processedAt: new Date() };
+      const confirmedOrder = {
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        processedAt: new Date(),
+      };
 
       // buildDataSourceMock returns product with quantity=10
       await createModule(buildDataSourceMock([product], confirmedOrder));
@@ -200,7 +214,10 @@ describe('SellerService', () => {
       const result = await service.confirmOrder(order.id);
 
       // transaction was called with SERIALIZABLE isolation
-      expect(dataSourceMock.transaction).toHaveBeenCalledWith('SERIALIZABLE', expect.any(Function));
+      expect(dataSourceMock.transaction).toHaveBeenCalledWith(
+        'SERIALIZABLE',
+        expect.any(Function),
+      );
 
       // stock was saved with decremented quantity (10 - 2 = 8)
       expect(dataSourceMock.productRepoMock.save).toHaveBeenCalledWith(
@@ -213,14 +230,18 @@ describe('SellerService', () => {
       );
 
       expect(result.status).toBe(OrderStatus.CONFIRMED);
-      expect(mockRabbitMQConsumer.acknowledgeOrder).toHaveBeenCalledWith(order.orderId);
+      expect(mockRabbitMQConsumer.acknowledgeOrder).toHaveBeenCalledWith(
+        order.orderId,
+      );
     });
 
     it('throws BadRequestException if order is already CONFIRMED', async () => {
       const order = makeOrder({ status: OrderStatus.CONFIRMED });
       mockRepository.findOne.mockResolvedValue(order);
 
-      await expect(service.confirmOrder(order.id)).rejects.toThrow(BadRequestException);
+      await expect(service.confirmOrder(order.id)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(dataSourceMock.transaction).not.toHaveBeenCalled();
     });
 
@@ -228,7 +249,9 @@ describe('SellerService', () => {
       const order = makeOrder({ status: OrderStatus.REJECTED });
       mockRepository.findOne.mockResolvedValue(order);
 
-      await expect(service.confirmOrder(order.id)).rejects.toThrow(BadRequestException);
+      await expect(service.confirmOrder(order.id)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws NotFoundException when a product is missing from DB', async () => {
@@ -236,7 +259,9 @@ describe('SellerService', () => {
       await createModule(buildDataSourceMock([], {}));
       mockRepository.findOne.mockResolvedValue(makeOrder());
 
-      await expect(service.confirmOrder('order-uuid-1')).rejects.toThrow(NotFoundException);
+      await expect(service.confirmOrder('order-uuid-1')).rejects.toThrow(
+        NotFoundException,
+      );
       expect(mockRabbitMQConsumer.acknowledgeOrder).not.toHaveBeenCalled();
     });
 
@@ -246,7 +271,9 @@ describe('SellerService', () => {
       await createModule(buildDataSourceMock([lowStockProduct], {}));
       mockRepository.findOne.mockResolvedValue(makeOrder());
 
-      await expect(service.confirmOrder('order-uuid-1')).rejects.toThrow(BadRequestException);
+      await expect(service.confirmOrder('order-uuid-1')).rejects.toThrow(
+        BadRequestException,
+      );
       expect(mockRabbitMQConsumer.acknowledgeOrder).not.toHaveBeenCalled();
     });
 
@@ -259,9 +286,15 @@ describe('SellerService', () => {
           { productId: 'p-b', quantity: 2, price: 15 },
         ],
       });
-      const confirmedOrder = { ...order, status: OrderStatus.CONFIRMED, processedAt: new Date() };
+      const confirmedOrder = {
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        processedAt: new Date(),
+      };
 
-      await createModule(buildDataSourceMock([productA, productB], confirmedOrder));
+      await createModule(
+        buildDataSourceMock([productA, productB], confirmedOrder),
+      );
       mockRepository.findOne.mockResolvedValue(order);
       mockRabbitMQConsumer.acknowledgeOrder.mockResolvedValue(undefined);
 
@@ -279,7 +312,11 @@ describe('SellerService', () => {
   describe('rejectOrder', () => {
     it('rejects order and NACKs the RabbitMQ message', async () => {
       const order = makeOrder();
-      const rejectedOrder = { ...order, status: OrderStatus.REJECTED, processedAt: new Date() };
+      const rejectedOrder = {
+        ...order,
+        status: OrderStatus.REJECTED,
+        processedAt: new Date(),
+      };
 
       mockRepository.findOne.mockResolvedValue(order);
       mockRepository.save.mockResolvedValue(rejectedOrder);
@@ -289,20 +326,29 @@ describe('SellerService', () => {
 
       expect(result.status).toBe(OrderStatus.REJECTED);
       expect(result.processedAt).toBeDefined();
-      expect(mockRabbitMQConsumer.rejectOrder).toHaveBeenCalledWith(order.orderId);
+      expect(mockRabbitMQConsumer.rejectOrder).toHaveBeenCalledWith(
+        order.orderId,
+      );
       // No transaction needed for reject
       expect(dataSourceMock.transaction).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException if order is already CONFIRMED', async () => {
-      mockRepository.findOne.mockResolvedValue(makeOrder({ status: OrderStatus.CONFIRMED }));
-      await expect(service.rejectOrder('order-uuid-1')).rejects.toThrow(BadRequestException);
+      mockRepository.findOne.mockResolvedValue(
+        makeOrder({ status: OrderStatus.CONFIRMED }),
+      );
+      await expect(service.rejectOrder('order-uuid-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException if order is already REJECTED', async () => {
-      mockRepository.findOne.mockResolvedValue(makeOrder({ status: OrderStatus.REJECTED }));
-      await expect(service.rejectOrder('order-uuid-1')).rejects.toThrow(BadRequestException);
+      mockRepository.findOne.mockResolvedValue(
+        makeOrder({ status: OrderStatus.REJECTED }),
+      );
+      await expect(service.rejectOrder('order-uuid-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });
-

@@ -1,16 +1,15 @@
 export class OrderCreatedEvent {
-  orderId: string;
-  sellerId: string;
+  orderId: string
+  sellerId: string
   items: Array<{
-    product_id: string;
-    quantity: number;
-    price: number;
-  }>;
-  totalPrice: number;
+    product_id: string
+    quantity: number
+    price: number
+  }>
+  totalPrice: number
 }
 
 export class OrderProcessedEvent {
-  orderId: string;
-  status: 'CONFIRMED' | 'REJECTED';
+  orderId: string
+  status: 'CONFIRMED' | 'REJECTED'
 }
-

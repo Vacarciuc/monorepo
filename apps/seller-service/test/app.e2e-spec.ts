@@ -63,10 +63,18 @@ describe('Seller Service E2E Tests', () => {
     it('/sellers (GET) - should return all sellers', async () => {
       await request(app.getHttpServer())
         .post('/sellers')
-        .send({ name: 'Seller 1', email: 'seller1@example.com', companyName: 'Company 1' });
+        .send({
+          name: 'Seller 1',
+          email: 'seller1@example.com',
+          companyName: 'Company 1',
+        });
       await request(app.getHttpServer())
         .post('/sellers')
-        .send({ name: 'Seller 2', email: 'seller2@example.com', companyName: 'Company 2' });
+        .send({
+          name: 'Seller 2',
+          email: 'seller2@example.com',
+          companyName: 'Company 2',
+        });
       return request(app.getHttpServer())
         .get('/sellers')
         .expect(200)
@@ -77,10 +85,14 @@ describe('Seller Service E2E Tests', () => {
     it('/sellers/:id (GET) - should return a seller by id', async () => {
       const createResponse = await request(app.getHttpServer())
         .post('/sellers')
-        .send({ name: 'John Doe', email: 'john@example.com', companyName: 'Acme Inc.' });
+        .send({
+          name: 'John Doe',
+          email: 'john@example.com',
+          companyName: 'Acme Inc.',
+        });
       const sellerId = createResponse.body.id;
       return request(app.getHttpServer())
-        .get(\`/sellers/\${sellerId}\`)
+        .get(`/sellers/\${sellerId}`)
         .expect(200)
         .then((response) => {
           expect(response.body.id).toEqual(sellerId);
@@ -93,7 +105,11 @@ describe('Seller Service E2E Tests', () => {
     beforeEach(async () => {
       const response = await request(app.getHttpServer())
         .post('/sellers')
-        .send({ name: 'Test Seller', email: 'test@example.com', companyName: 'Test Inc.' });
+        .send({
+          name: 'Test Seller',
+          email: 'test@example.com',
+          companyName: 'Test Inc.',
+        });
       sellerId = response.body.id;
     });
     it('/products (POST) - should create a new product', () => {
@@ -128,7 +144,11 @@ describe('Seller Service E2E Tests', () => {
     beforeEach(async () => {
       const sellerResponse = await request(app.getHttpServer())
         .post('/sellers')
-        .send({ name: 'Test Seller', email: 'test@example.com', companyName: 'Test Inc.' });
+        .send({
+          name: 'Test Seller',
+          email: 'test@example.com',
+          companyName: 'Test Inc.',
+        });
       sellerId = sellerResponse.body.id;
       const productResponse = await request(app.getHttpServer())
         .post('/products')
@@ -137,7 +157,7 @@ describe('Seller Service E2E Tests', () => {
     });
     it('/sellers/:id/cart (GET) - should return seller cart', () => {
       return request(app.getHttpServer())
-        .get(\`/sellers/\${sellerId}/cart\`)
+        .get(`/sellers/\${sellerId}/cart`)
         .expect(200)
         .then((response) => {
           expect(response.body.sellerId).toEqual(sellerId);
@@ -146,7 +166,7 @@ describe('Seller Service E2E Tests', () => {
     });
     it('/sellers/:id/cart/items (POST) - should add item to cart', () => {
       return request(app.getHttpServer())
-        .post(\`/sellers/\${sellerId}/cart/items\`)
+        .post(`/sellers/\${sellerId}/cart/items`)
         .send({ productId, quantity: 2 })
         .expect(201)
         .then((response) => {

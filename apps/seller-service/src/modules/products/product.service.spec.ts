@@ -63,7 +63,10 @@ describe('ProductService', () => {
       mockRepository.create.mockReturnValue(mockProduct);
       mockRepository.save.mockResolvedValue(mockProduct);
 
-      const result = await service.createProduct(createDto, '/uploads/products/test.png');
+      const result = await service.createProduct(
+        createDto,
+        '/uploads/products/test.png',
+      );
 
       expect(mockRepository.create).toHaveBeenCalledWith({
         ...createDto,
@@ -92,8 +95,14 @@ describe('ProductService', () => {
         price: 10,
         sellerId: 'seller-123',
       };
-      mockRepository.create.mockReturnValue({ ...mockProduct, sellerId: 'seller-123' });
-      mockRepository.save.mockResolvedValue({ ...mockProduct, sellerId: 'seller-123' });
+      mockRepository.create.mockReturnValue({
+        ...mockProduct,
+        sellerId: 'seller-123',
+      });
+      mockRepository.save.mockResolvedValue({
+        ...mockProduct,
+        sellerId: 'seller-123',
+      });
 
       const result = await service.createProduct(createDto);
 
@@ -124,7 +133,9 @@ describe('ProductService', () => {
 
       const result = await service.findProductById(mockProduct.id);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: mockProduct.id } });
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockProduct.id },
+      });
       expect(result).toEqual(mockProduct);
     });
 
@@ -149,7 +160,9 @@ describe('ProductService', () => {
 
       const result = await service.updateProduct(mockProduct.id, updateDto);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: mockProduct.id } });
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockProduct.id },
+      });
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.name).toEqual(updateDto.name);
       expect(result.price).toEqual(updateDto.price);
@@ -168,9 +181,9 @@ describe('ProductService', () => {
     it('should throw NotFoundException if product not found during update', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.updateProduct('non-existent', { name: 'x' })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.updateProduct('non-existent', { name: 'x' }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -181,7 +194,9 @@ describe('ProductService', () => {
 
       await service.deleteProduct(mockProduct.id);
 
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: mockProduct.id } });
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockProduct.id },
+      });
       expect(mockRepository.remove).toHaveBeenCalledWith(mockProduct);
     });
 
@@ -194,4 +209,3 @@ describe('ProductService', () => {
     });
   });
 });
-

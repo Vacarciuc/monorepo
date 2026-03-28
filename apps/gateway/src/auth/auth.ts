@@ -1,4 +1,4 @@
-import { UserRole } from "@/auth/user-role";
+import { UserRole } from '@/auth/user-role'
 
 export interface DecodedJwt {
   sub: number

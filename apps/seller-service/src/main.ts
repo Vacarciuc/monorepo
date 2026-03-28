@@ -39,9 +39,9 @@ async function bootstrap() {
   logger.log(`🚀 Seller Service running on: http://localhost:${port}`);
   logger.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
   logger.log(`📦 RabbitMQ consumer active and listening for order events`);
-  logger.log(`🖼️  Static images served at: http://localhost:${port}/uploads/products/`);
+  logger.log(
+    `🖼️  Static images served at: http://localhost:${port}/uploads/products/`,
+  );
 }
 
 bootstrap();
-
-

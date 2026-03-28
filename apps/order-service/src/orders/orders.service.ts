@@ -1,13 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
-import { Order, OrderStatus } from '../entities/order.entity';
-import { OrderItem } from '../entities/order-item.entity';
-import { RabbitMQService } from '../rabbitmq/rabbitmq.service';
-import { OrderProcessedEvent } from '../events/order.events';
-import { CartItem } from '../entities/cart-item.entity';
-import { Product } from '../entities/product.entity';
-import { OutboxEvent, OutboxEventType } from '../entities/outbox-event.entity';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { DataSource, Repository } from 'typeorm'
+
+import { CartItem } from '../entities/cart-item.entity'
+import { OrderItem } from '../entities/order-item.entity'
+import { Order, OrderStatus } from '../entities/order.entity'
+import { OutboxEvent, OutboxEventType } from '../entities/outbox-event.entity'
+import { Product } from '../entities/product.entity'
+import { OrderProcessedEvent } from '../events/order.events'
+import { RabbitMQService } from '../rabbitmq/rabbitmq.service'
 
 @Injectable()
 export class OrdersService implements OnModuleInit {
@@ -23,33 +29,33 @@ export class OrdersService implements OnModuleInit {
   async onModuleInit() {
     await this.rabbitMQService.consumeOrderProcessed(
       this.handleOrderProcessed.bind(this),
-    );
+    )
   }
 
   async createOrderFromCart(userId: string): Promise<Order> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const queryRunner = this.dataSource.createQueryRunner()
+    await queryRunner.connect()
+    await queryRunner.startTransaction()
 
     try {
-      const cartItemRepo = queryRunner.manager.getRepository(CartItem);
-      const productRepo = queryRunner.manager.getRepository(Product);
-      const orderRepo = queryRunner.manager.getRepository(Order);
-      const orderItemRepo = queryRunner.manager.getRepository(OrderItem);
-      const outboxRepo = queryRunner.manager.getRepository(OutboxEvent);
+      const cartItemRepo = queryRunner.manager.getRepository(CartItem)
+      const productRepo = queryRunner.manager.getRepository(Product)
+      const orderRepo = queryRunner.manager.getRepository(Order)
+      const orderItemRepo = queryRunner.manager.getRepository(OrderItem)
+      const outboxRepo = queryRunner.manager.getRepository(OutboxEvent)
 
       const cartItems = await cartItemRepo.find({
         where: { user_id: userId },
         relations: ['product'],
-      });
+      })
 
       if (cartItems.length === 0) {
-        throw new BadRequestException('Cart is empty');
+        throw new BadRequestException('Cart is empty')
       }
 
-      let totalPrice = 0;
-      const orderItems: OrderItem[] = [];
-      let sellerId: string | null = null;
+      let totalPrice = 0
+      const orderItems: OrderItem[] = []
+      let sellerId: string | null = null
 
       for (const cartItem of cartItems) {
         // Lock the product row so stock can't be decremented concurrently.
@@ -57,38 +63,40 @@ export class OrdersService implements OnModuleInit {
           .createQueryBuilder('p')
           .setLock('pessimistic_write')
           .where('p.id = :id', { id: cartItem.product_id })
-          .getOne();
+          .getOne()
 
         if (!product) {
           throw new NotFoundException(
             `Product with ID ${cartItem.product_id} not found`,
-          );
+          )
         }
 
         if (!sellerId) {
-          sellerId = product.seller_id;
+          sellerId = product.seller_id
         } else if (sellerId !== product.seller_id) {
-          throw new BadRequestException('All products must be from the same seller');
+          throw new BadRequestException(
+            'All products must be from the same seller',
+          )
         }
 
         if (product.stock < cartItem.quantity) {
           throw new BadRequestException(
             `Insufficient stock for product ${product.name}`,
-          );
+          )
         }
 
-        product.stock -= cartItem.quantity;
-        await productRepo.save(product);
+        product.stock -= cartItem.quantity
+        await productRepo.save(product)
 
-        const itemPrice = product.price * cartItem.quantity;
-        totalPrice += itemPrice;
+        const itemPrice = product.price * cartItem.quantity
+        totalPrice += itemPrice
 
         const orderItem = orderItemRepo.create({
           product_id: product.id,
           quantity: cartItem.quantity,
           price: product.price,
-        });
-        orderItems.push(orderItem);
+        })
+        orderItems.push(orderItem)
       }
 
       const order = orderRepo.create({
@@ -97,11 +105,11 @@ export class OrdersService implements OnModuleInit {
         total_price: totalPrice,
         status: OrderStatus.PENDING,
         items: orderItems,
-      });
+      })
 
-      const savedOrder = await orderRepo.save(order);
+      const savedOrder = await orderRepo.save(order)
 
-      await cartItemRepo.delete({ user_id: userId });
+      await cartItemRepo.delete({ user_id: userId })
 
       const eventPayload = {
         orderId: savedOrder.id,
@@ -112,9 +120,9 @@ export class OrdersService implements OnModuleInit {
           price: item.price,
         })),
         totalPrice: totalPrice,
-      };
+      }
 
-      const routingKey = `order.created.${sellerId!}`;
+      const routingKey = `order.created.${sellerId!}`
       await outboxRepo.save(
         outboxRepo.create({
           type: OutboxEventType.ORDER_CREATED,
@@ -122,15 +130,15 @@ export class OrdersService implements OnModuleInit {
           payload: eventPayload,
           published_at: null,
         }),
-      );
+      )
 
-      await queryRunner.commitTransaction();
-      return savedOrder;
+      await queryRunner.commitTransaction()
+      return savedOrder
     } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
+      await queryRunner.rollbackTransaction()
+      throw err
     } finally {
-      await queryRunner.release();
+      await queryRunner.release()
     }
   }
 
@@ -139,38 +147,37 @@ export class OrdersService implements OnModuleInit {
       where: { user_id: userId },
       relations: ['items', 'items.product'],
       order: { created_at: 'DESC' },
-    });
+    })
   }
 
   async findOne(orderId: string, userId: string): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { id: orderId, user_id: userId },
       relations: ['items', 'items.product'],
-    });
+    })
 
     if (!order) {
-      throw new NotFoundException(`Order with ID ${orderId} not found`);
+      throw new NotFoundException(`Order with ID ${orderId} not found`)
     }
 
-    return order;
+    return order
   }
 
   private async handleOrderProcessed(event: OrderProcessedEvent) {
-    console.log('Processing OrderProcessedEvent:', event);
+    console.log('Processing OrderProcessedEvent:', event)
 
     const order = await this.orderRepository.findOne({
       where: { id: event.orderId },
-    });
+    })
 
     if (!order) {
-      console.error(`Order ${event.orderId} not found`);
-      return;
+      console.error(`Order ${event.orderId} not found`)
+      return
     }
 
-    order.status = event.status as OrderStatus;
-    await this.orderRepository.save(order);
+    order.status = event.status as OrderStatus
+    await this.orderRepository.save(order)
 
-    console.log(`Order ${event.orderId} status updated to ${event.status}`);
+    console.log(`Order ${event.orderId} status updated to ${event.status}`)
   }
 }
-

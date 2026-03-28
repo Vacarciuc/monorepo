@@ -5,7 +5,10 @@ import { ConfigModule } from '@nestjs/config';
 import { SellerModule } from '../src/modules/seller/seller.module';
 import { SellerService } from '../src/modules/seller/seller.service';
 import { RabbitMQProducer } from '../src/messaging/rabbitmq.producer';
-import { SellerOrder, OrderStatus } from '../src/database/entities/seller-order.entity';
+import {
+  SellerOrder,
+  OrderStatus,
+} from '../src/database/entities/seller-order.entity';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { OrderCreatedEvent } from '../src/dto/order-created.event';
@@ -58,7 +61,9 @@ describe('Seller Service E2E', () => {
   describe('Order Processing Flow', () => {
     it('should process order from PENDING to CONFIRMED', async () => {
       // Mock the producer to avoid actual RabbitMQ connection
-      jest.spyOn(producer, 'publishOrderProcessed').mockResolvedValue(undefined);
+      jest
+        .spyOn(producer, 'publishOrderProcessed')
+        .mockResolvedValue(undefined);
 
       const orderCreatedEvent: OrderCreatedEvent = {
         orderId: '123e4567-e89b-12d3-a456-426614174000',
@@ -98,7 +103,9 @@ describe('Seller Service E2E', () => {
     });
 
     it('should process multiple orders independently', async () => {
-      jest.spyOn(producer, 'publishOrderProcessed').mockResolvedValue(undefined);
+      jest
+        .spyOn(producer, 'publishOrderProcessed')
+        .mockResolvedValue(undefined);
 
       const event1: OrderCreatedEvent = {
         orderId: '123e4567-e89b-12d3-a456-426614174000',
@@ -123,13 +130,17 @@ describe('Seller Service E2E', () => {
       // Verify both orders exist
       const orders = await repository.find();
       expect(orders).toHaveLength(2);
-      expect(orders.every((o) => o.status === OrderStatus.CONFIRMED)).toBe(true);
+      expect(orders.every((o) => o.status === OrderStatus.CONFIRMED)).toBe(
+        true,
+      );
     });
   });
 
   describe('Manual Order Operations', () => {
     it('should manually confirm a pending order', async () => {
-      jest.spyOn(producer, 'publishOrderProcessed').mockResolvedValue(undefined);
+      jest
+        .spyOn(producer, 'publishOrderProcessed')
+        .mockResolvedValue(undefined);
 
       // Create a pending order
       const order = repository.create({
@@ -147,7 +158,9 @@ describe('Seller Service E2E', () => {
     });
 
     it('should manually reject a pending order', async () => {
-      jest.spyOn(producer, 'publishOrderProcessed').mockResolvedValue(undefined);
+      jest
+        .spyOn(producer, 'publishOrderProcessed')
+        .mockResolvedValue(undefined);
 
       // Create a pending order
       const order = repository.create({
@@ -208,5 +221,3 @@ describe('Seller Service E2E', () => {
     });
   });
 });
-
-

@@ -89,7 +89,9 @@ export class SeedService implements OnModuleInit {
     try {
       const count = await this.productRepository.count();
       if (count > 0) {
-        this.logger.log(`Database already has ${count} products, skipping seed.`);
+        this.logger.log(
+          `Database already has ${count} products, skipping seed.`,
+        );
         return;
       }
 
@@ -102,5 +104,3 @@ export class SeedService implements OnModuleInit {
     }
   }
 }
-
-

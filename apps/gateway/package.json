@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --cache --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -41,7 +40,6 @@
     "@types/node": "^22.14.1",
     "@types/qs": "^6.9.18",
     "@types/uuid": "^10.0.0",
-    "prettier": "^3.5.3",
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",

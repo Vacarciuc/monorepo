@@ -3,7 +3,10 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SellerModule } from '../src/modules/seller/seller.module';
-import { SellerOrder, OrderStatus } from '../src/database/entities/seller-order.entity';
+import {
+  SellerOrder,
+  OrderStatus,
+} from '../src/database/entities/seller-order.entity';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
@@ -185,4 +188,3 @@ describe('SellerController (Integration)', () => {
     });
   });
 });
-

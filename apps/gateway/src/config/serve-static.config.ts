@@ -1,8 +1,8 @@
 import {
   ServeStaticModuleAsyncOptions,
   ServeStaticModuleOptions,
-} from "@nestjs/serve-static";
-import path from "path";
+} from '@nestjs/serve-static'
+import path from 'path'
 
 export const SERVE_STATIC_CONFIG: ServeStaticModuleAsyncOptions = {
   useFactory: () => {
@@ -11,18 +11,18 @@ export const SERVE_STATIC_CONFIG: ServeStaticModuleAsyncOptions = {
       serveStaticOptions: {
         etag: true,
         cacheControl: true,
-        dotfiles: "ignore",
+        dotfiles: 'ignore',
         lastModified: true,
-        maxAge: "12h",
+        maxAge: '12h',
       },
-    };
+    }
 
     return [
       {
-        rootPath: path.join(__dirname, "assets"),
-        serveRoot: "/assets",
+        rootPath: path.join(__dirname, 'assets'),
+        serveRoot: '/assets',
         ...sharedProps,
       },
-    ];
+    ]
   },
-};
+}

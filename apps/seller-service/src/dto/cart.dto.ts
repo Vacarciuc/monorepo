@@ -15,10 +15,13 @@ export class AddToCartDto {
 }
 
 export class UpdateCartItemDto {
-  @ApiProperty({ description: 'New quantity (0 = remove)', minimum: 0, example: 3 })
+  @ApiProperty({
+    description: 'New quantity (0 = remove)',
+    minimum: 0,
+    example: 3,
+  })
   @IsInt()
   @Min(0)
   @Type(() => Number)
   quantity: number;
 }
-

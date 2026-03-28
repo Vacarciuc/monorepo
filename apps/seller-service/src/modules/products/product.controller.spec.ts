@@ -156,7 +156,11 @@ describe('ProductController', () => {
       const updatedMock = { ...mockProduct, ...updateDto };
       mockProductService.updateProduct.mockResolvedValue(updatedMock);
 
-      const result = await controller.updateProduct(mockProduct.id, updateDto, mockFile);
+      const result = await controller.updateProduct(
+        mockProduct.id,
+        updateDto,
+        mockFile,
+      );
 
       expect(service.updateProduct).toHaveBeenCalledWith(
         mockProduct.id,
@@ -169,11 +173,18 @@ describe('ProductController', () => {
 
     it('should update a product without new image', async () => {
       const updateDto = { quantity: 50 };
-      mockProductService.updateProduct.mockResolvedValue({ ...mockProduct, quantity: 50 });
+      mockProductService.updateProduct.mockResolvedValue({
+        ...mockProduct,
+        quantity: 50,
+      });
 
       const result = await controller.updateProduct(mockProduct.id, updateDto);
 
-      expect(service.updateProduct).toHaveBeenCalledWith(mockProduct.id, updateDto, undefined);
+      expect(service.updateProduct).toHaveBeenCalledWith(
+        mockProduct.id,
+        updateDto,
+        undefined,
+      );
       expect(result.quantity).toBe(50);
     });
   });
@@ -188,4 +199,3 @@ describe('ProductController', () => {
     });
   });
 });
-
