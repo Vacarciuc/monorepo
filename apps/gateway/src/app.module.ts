@@ -9,9 +9,15 @@ import { LoggingInterceptor } from '@/common/interceptors/logging.interceptor'
 import { ENV_CONFIG } from '@/config/env.config'
 import { GLOBAL_VALIDATION_PIPE_CONFIG } from '@/config/global-validation-pipe.config'
 import { HealthModule } from '@/health/health.module'
+import { OrderModule } from '@/order/order.module'
 
 @Module({
-  imports: [ConfigModule.forRoot(ENV_CONFIG), HealthModule, AuthModule],
+  imports: [
+    ConfigModule.forRoot(ENV_CONFIG),
+    HealthModule,
+    AuthModule,
+    OrderModule,
+  ],
   controllers: [],
   providers: [
     {

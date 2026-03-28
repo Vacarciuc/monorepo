@@ -2,16 +2,15 @@ import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
-// 1. Import Swagger tools
 import { AppModule } from './app.module'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
 
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: '*',
+    methods: '*',
+    allowedHeaders: '*',
   })
 
   app.useGlobalPipes(
@@ -33,7 +32,7 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, document)
 
-  const port = process.env.PORT || 3003
+  const port = process.env.PORT!
   await app.listen(port)
   console.log(`Order Service is running on: http://localhost:${port}/api`)
 }
