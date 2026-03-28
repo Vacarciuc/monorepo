@@ -102,9 +102,11 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "15692:15692"
     environment:
       RABBITMQ_DEFAULT_USER: ${MQ_USER}
       RABBITMQ_DEFAULT_PASS: ${MQ_PASS}
+      ABBITMQ_ENABLED_PLUGINS: rabbitmq_management,rabbitmq_prometheus
     volumes: [rabbitmq-data:/var/lib/rabbitmq]
     networks: [marketplace-network]
     healthcheck:

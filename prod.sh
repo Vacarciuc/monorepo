@@ -4,7 +4,6 @@ PROJ=dasi
 
 docker compose \
   --project-name $PROJ \
-  --timeout 10 \
   down
 
 docker compose \
