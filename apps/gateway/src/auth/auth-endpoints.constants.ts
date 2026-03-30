@@ -5,4 +5,8 @@ export const authEndpoints = {
   register: compile('register'),
   validate: compile('validate'),
   getSelf: compile(''),
+
+  findUser: compile('users/:id'),
+  findUsers: compile('users'),
+  deleteUser: compile('users'),
 }

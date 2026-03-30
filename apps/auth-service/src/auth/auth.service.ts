@@ -145,4 +145,27 @@ export class AuthService {
 
     return this.userRepo.save(user)
   }
+
+  async findAll(): Promise<User[]> {
+    return this.userRepo.find({
+      // where: {},
+      // take: -1,
+      // skip: 0,
+    })
+  }
+
+  async findOne(id: number): Promise<User> {
+    const user = await this.userRepo.findOne({ where: { id } })
+    if (!user) {
+      throw new NotFoundException(`User${id} not found`)
+    }
+    return user
+  }
+
+  async remove(id: number): Promise<void> {
+    const result = await this.userRepo.delete(id)
+    if (result.affected === 0) {
+      throw new NotFoundException(`User ${id} not found`)
+    }
+  }
 }

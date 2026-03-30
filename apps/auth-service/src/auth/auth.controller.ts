@@ -1,10 +1,19 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common'
 import {
   ApiConflictResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger'
+import { plainToInstance } from 'class-transformer'
 
 import { type DecodedJwt } from '@/auth/auth'
 import { Public, RequestToken } from '@/auth/auth.decorator'
@@ -13,6 +22,7 @@ import { AppTag } from '@/config/tags.config'
 import { GetSelfDto } from '@/dto/get-self.dto'
 import { LoginDto } from '@/dto/login.dto'
 import { RegisterDto } from '@/dto/register.dto'
+import { UserDto } from '@/dto/user.dto'
 
 @Controller('auth')
 @ApiTags(AppTag.Auth)
@@ -49,5 +59,29 @@ export class AuthController {
   })
   validate(@Body() body: any): ReturnType<AuthService['validateToken']> {
     return this.authService.validateToken(body.token)
+  }
+
+  @Get('users')
+  @Public()
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiOkResponse({ type: [UserDto] }) // Assuming User entity is exported
+  async findAll(): Promise<UserDto[]> {
+    const users = await this.authService.findAll()
+    return users.map((user) => plainToInstance(UserDto, user))
+  }
+
+  @Get('users/:id')
+  @Public()
+  @ApiOperation({ summary: 'Get one user by ID' })
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserDto> {
+    const user = await this.authService.findOne(id)
+    return plainToInstance(UserDto, user)
+  }
+
+  @Delete('users/:id')
+  @Public()
+  @ApiOperation({ summary: 'Delete a user' })
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.authService.remove(id)
   }
 }
