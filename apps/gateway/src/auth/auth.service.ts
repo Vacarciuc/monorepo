@@ -6,6 +6,7 @@ import { DecodedJwt } from '@/auth/decoded-jwt.types'
 import { LoginDto } from '@/auth/dto/request/login.dto'
 import { RegisterDto } from '@/auth/dto/request/register.dto'
 import { BaseMicroserviceService } from '@/common/classes/base-microservice-service'
+import { UserDto } from '@/auth/dto/response/user.dto'
 
 @Injectable()
 export class AuthService extends BaseMicroserviceService {
@@ -44,6 +45,27 @@ export class AuthService extends BaseMicroserviceService {
         Authorization: `Bearer ${token}`,
       },
       method: 'GET',
+    })
+  }
+
+  async findUsers(): Promise<UserDto[]> {
+    return this.forwardRequest({
+      url: authEndpoints.findUsers(),
+      method: 'GET',
+    })
+  }
+
+  async findOne(id: number): Promise<UserDto> {
+    return this.forwardRequest({
+      url: authEndpoints.findUser({ id: id.toString() }),
+      method: 'GET',
+    })
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    return this.forwardRequest({
+      url: authEndpoints.deleteUser({ id: id.toString() }),
+      method: 'DELETE',
     })
   }
 }

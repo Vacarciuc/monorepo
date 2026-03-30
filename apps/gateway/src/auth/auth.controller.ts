@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Req,
+} from '@nestjs/common'
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -9,7 +18,7 @@ import {
 } from '@nestjs/swagger'
 import { Request } from 'express'
 
-import { Authorize, Public, RequestUser } from '@/auth/auth.decorator'
+import { Authorize, Public } from '@/auth/auth.decorator'
 import { AuthService } from '@/auth/auth.service'
 import { LoginDto } from '@/auth/dto/request/login.dto'
 import { RegisterDto } from '@/auth/dto/request/register.dto'
@@ -46,5 +55,30 @@ export class AuthController {
   async getSelf(@Req() req: Request): ReturnType<AuthService['getSelf']> {
     const token = req.headers.authorization!.split(' ')[1]!
     return this.authService.getSelf(token)
+  }
+
+  @Get('users')
+  @Public()
+  @ApiOperation({ summary: 'Retrieve all users' })
+  async findUsers(): ReturnType<AuthService['findUsers']> {
+    return this.authService.findUsers()
+  }
+
+  @Get('users/:id')
+  @Public()
+  @ApiOperation({ summary: 'Retrieve a specific user by ID' })
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): ReturnType<AuthService['findOne']> {
+    return this.authService.findOne(id)
+  }
+
+  @Delete('users/:id')
+  @Public()
+  @ApiOperation({ summary: 'Delete a user by ID' })
+  async deleteUser(
+    @Param('id', ParseIntPipe) id: number,
+  ): ReturnType<AuthService['deleteUser']> {
+    return this.authService.deleteUser(id)
   }
 }
