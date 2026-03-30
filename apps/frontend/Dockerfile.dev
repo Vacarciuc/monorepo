@@ -1,0 +1,24 @@
+FROM node:20-alpine
+
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Install pnpm via corepack
+RUN npm i -g corepack && corepack enable
+
+# Install deps first (cached layer)
+COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm-frontend,target=/root/.local/share/pnpm/store \
+    pnpm fetch --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-frontend,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# Copy source — in dev, src/ is synced via compose watch
+COPY . .
+
+EXPOSE 5173
+
+# Vite dev server — host 0.0.0.0 so Docker can expose the port
+CMD ["pnpm", "dev", "--host", "0.0.0.0", "--port", "5173"]
+
