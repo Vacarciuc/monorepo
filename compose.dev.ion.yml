@@ -1,0 +1,324 @@
+services:
+  auth-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: ${AUTH_DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes: [auth-db-data:/var/lib/postgresql/data]
+    networks: [marketplace-network]
+    healthcheck: &pg-healthcheck
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  auth-db-exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks: [marketplace-network]
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    restart: always
+
+  auth-service:
+    build:
+      context: ./apps/auth-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: "3000"
+      DB_HOST: auth-db
+      DB_PORT: "5432"
+      DB_USER: ${AUTH_DB_USER}
+      DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      DB_NAME: ${AUTH_DB_NAME}
+      CORS_ORIGIN: "http://localhost:3000"
+      CORS_HEADERS: "*"
+      CORS_METHODS: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+      JWT_SECRET: "1234567890"
+      JWT_TTL: "24h"
+      JWT_AUD: "dasi"
+    init: true
+    ports:
+      - "3001:3000"
+    restart: no
+    scale: 1
+    mem_limit: 2G
+    cpu_count: 1
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/auth-service/src/
+          target: /app/src/
+        - action: rebuild
+          path: ./apps/auth-service/package.json
+        - action: sync+restart
+          path: ./apps/auth-service/nest-cli.json
+          target: /app/nest-cli.json
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks: [marketplace-network]
+    healthcheck: &node-healthcheck
+      test:
+        [
+          "CMD", "curl", "-f",
+          "http://localhost:3000/api/v1/health",
+          "-H", "accept: application/json",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+  gateway:
+    build:
+      context: ./apps/gateway
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: "3000"
+      CORS_ORIGIN: "http://localhost:3000"
+      CORS_HEADERS: "*"
+      CORS_METHODS: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+      AUTH_SERVICE_URL: "http://auth-service:3000"
+      ORDER_SERVICE_URL: "http://order-service:3000"
+      SELLER_SERVICE_URL: "http://seller-service:3000"
+    init: true
+    ports:
+      - "3000:3000"
+    restart: no
+    scale: 1
+    mem_limit: 2G
+    cpu_count: 1
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/gateway/src/
+          target: /app/src/
+        - action: rebuild
+          path: ./apps/gateway/package.json
+        - action: sync+restart
+          path: ./apps/gateway/nest-cli.json
+          target: /app/nest-cli.json
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    networks: [marketplace-network]
+    healthcheck: *node-healthcheck
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "15692:15692"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${MQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${MQ_PASS}
+    volumes: [rabbitmq-data:/var/lib/rabbitmq]
+    networks: [marketplace-network]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  order-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${ORDER_SERVICE_DB_USER}
+      POSTGRES_PASSWORD: ${ORDER_SERVICE_DB_PASSWORD}
+      POSTGRES_DB: ${ORDER_SERVICE_DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes: [order-db-data:/var/lib/postgresql/data]
+    networks: [marketplace-network]
+    healthcheck: *pg-healthcheck
+
+  order-db-exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${ORDER_SERVICE_DB_USER}:${ORDER_SERVICE_DB_PASSWORD}@order-db:5432/${ORDER_SERVICE_DB_NAME}?sslmode=disable"
+    ports:
+      - "9188:9187"
+    networks: [marketplace-network]
+    depends_on:
+      order-db:
+        condition: service_healthy
+    restart: always
+
+  order-service:
+    build:
+      context: ./apps/order-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      ORDER_SERVICE_HOST: "0.0.0.0"
+      ORDER_SERVICE_PORT: "3000"
+      ORDER_SERVICE_DB_HOST: order-db
+      ORDER_SERVICE_DB_PORT: "5432"
+      ORDER_SERVICE_DB_USER: ${ORDER_SERVICE_DB_USER}
+      ORDER_SERVICE_DB_PASSWORD: ${ORDER_SERVICE_DB_PASSWORD}
+      ORDER_SERVICE_DB_NAME: ${ORDER_SERVICE_DB_NAME}
+      RABBITMQ_URL: "amqp://${MQ_USER}:${MQ_PASS}@rabbitmq:5672"
+    init: true
+    ports:
+      - "3002:3000"
+    depends_on:
+      order-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [marketplace-network]
+
+  seller-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${SELLER_SERVICE_DB_USER}
+      POSTGRES_PASSWORD: ${SELLER_SERVICE_DB_PASSWORD}
+      POSTGRES_DB: ${SELLER_SERVICE_DB_NAME}
+    ports:
+      - "5434:5432"
+    volumes: [seller-db-data:/var/lib/postgresql/data]
+    networks: [marketplace-network]
+    healthcheck: *pg-healthcheck
+
+  seller-db-exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${SELLER_SERVICE_DB_USER}:${SELLER_SERVICE_DB_PASSWORD}@seller-db:5432/${SELLER_SERVICE_DB_NAME}?sslmode=disable"
+    ports:
+      - "9189:9187"
+    networks: [marketplace-network]
+    depends_on:
+      seller-db:
+        condition: service_healthy
+    restart: always
+
+  seller-service:
+    build:
+      context: ./apps/seller-service
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      # Database
+      DB_HOST: seller-db
+      DB_PORT: "5432"
+      DB_USER: ${SELLER_SERVICE_DB_USER}
+      DB_PASSWORD: ${SELLER_SERVICE_DB_PASSWORD}
+      DB_NAME: ${SELLER_SERVICE_DB_NAME}
+      # RabbitMQ — shared exchange
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: ${MQ_USER}
+      RABBITMQ_PASSWORD: ${MQ_PASS}
+      RABBITMQ_EXCHANGE: order.exchange
+      # Consumer — primeste ordine de la order-service
+      RABBITMQ_CONSUMER_QUEUE: seller.queue
+      RABBITMQ_CONSUMER_ROUTING_KEY: "order.created.*"
+      # Producer — trimite raspuns (CONFIRMED/REJECTED) inapoi la order-service
+      RABBITMQ_PRODUCER_ROUTING_KEY: order.processed
+    init: true
+    ports:
+      - "3003:3000"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/seller-service/src/
+          target: /app/src/
+        - action: rebuild
+          path: ./apps/seller-service/package.json
+        - action: sync+restart
+          path: ./apps/seller-service/nest-cli.json
+          target: /app/nest-cli.json
+    depends_on:
+      seller-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [marketplace-network]
+    healthcheck: *node-healthcheck
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      # Vite expune aceste variabile in browser prin import.meta.env
+      VITE_AUTH_API: ${VITE_AUTH_API}
+      VITE_ORDER_API: ${VITE_ORDER_API}
+      VITE_SELLER_API: ${VITE_SELLER_API}
+    init: true
+    ports:
+      - "5174:5173"
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/frontend/src/
+          target: /app/src/
+        - action: sync
+          path: ./apps/frontend/public/
+          target: /app/public/
+        - action: rebuild
+          path: ./apps/frontend/package.json
+        - action: sync+restart
+          path: ./apps/frontend/vite.config.ts
+          target: /app/vite.config.ts
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks: [marketplace-network]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/dev/:/etc/prometheus/
+      - prometheus-data:/prometheus
+    networks: [marketplace-network]
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "10000:3000"
+    volumes: [grafana-data:/var/lib/grafana/]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    depends_on: [prometheus]
+    networks: [marketplace-network]
+
+volumes:
+  auth-db-data:
+  order-db-data:
+  rabbitmq-data:
+  seller-db-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  marketplace-network:
+    driver: bridge
+    attachable: true
+    enable_ipv6: false
+
