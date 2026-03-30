@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
+import { APP_INTERCEPTOR } from '@nestjs/core'
 import { TypeOrmModule } from '@nestjs/typeorm'
 
 import { CartModule } from './cart/cart.module'
@@ -8,6 +9,8 @@ import { OrderItem } from './entities/order-item.entity'
 import { Order } from './entities/order.entity'
 import { OutboxEvent } from './entities/outbox-event.entity'
 import { Product } from './entities/product.entity'
+import { MetricsModule } from './metrics/metrics.module'
+import { TotalRequestsMetricsInterceptor } from './metrics/total-requests-metrics.interceptor'
 import { OrdersModule } from './orders/orders.module'
 import { ProductsModule } from './products/products.module'
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module'
@@ -35,6 +38,13 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module'
     CartModule,
     OrdersModule,
     RabbitMQModule,
+    MetricsModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TotalRequestsMetricsInterceptor,
+    },
   ],
 })
 export class AppModule {}
