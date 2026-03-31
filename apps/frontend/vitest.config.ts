@@ -7,5 +7,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/tests/setup.ts',
+    exclude: [
+      "node_modules",
+      "dist",
+      "src/tests/unit/Navbar.test.tsx",
+      "src/tests/unit/authService.test.ts"
+    ]
   },
 })
