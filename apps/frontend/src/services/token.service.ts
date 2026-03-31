@@ -4,19 +4,13 @@ const TOKEN_KEY = 'auth_token'
 
 export const tokenService = {
   saveToken(token: string): void {
-    // Save in cookie for 7 days
     Cookies.set(TOKEN_KEY, token, { expires: 7, sameSite: 'strict' })
-    // Also save in localStorage as backup
     localStorage.setItem(TOKEN_KEY, token)
   },
 
   getToken(): string | null {
-    // Try to get from cookie first
     const cookieToken = Cookies.get(TOKEN_KEY)
-    if (cookieToken) {
-      return cookieToken
-    }
-    // Fallback to localStorage
+    if (cookieToken) return cookieToken
     return localStorage.getItem(TOKEN_KEY)
   },
 
@@ -27,5 +21,19 @@ export const tokenService = {
 
   hasToken(): boolean {
     return !!this.getToken()
+  },
+
+  /** Decode JWT payload and return the `sub` field (user id). */
+  getUserId(): string | null {
+    const token = this.getToken()
+    if (!token) return null
+    try {
+      const base64Payload = token.split('.')[1]
+      const decoded = atob(base64Payload.replace(/-/g, '+').replace(/_/g, '/'))
+      const payload = JSON.parse(decoded)
+      return payload.sub ? String(payload.sub) : null
+    } catch {
+      return null
+    }
   },
 }
