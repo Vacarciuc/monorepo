@@ -7,11 +7,14 @@ import type {
   UpdateProductRequest,
 } from '../types/product'
 
+// All requests go through the gateway
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000'
+// Seller service URL is only needed for serving static images
 const SELLER_API_URL =
-  import.meta.env.VITE_SELLER_API || 'http://localhost:3002'
+  import.meta.env.VITE_SELLER_API || 'http://localhost:3003'
 
 const productClient = axios.create({
-  baseURL: SELLER_API_URL,
+  baseURL: `${GATEWAY_URL}/api/v1`,
 })
 
 // Add auth token to requests
@@ -22,12 +25,12 @@ productClient.interceptors.request.use((config) => {
 })
 
 export const getProducts = async (): Promise<Product[]> => {
-  const response = await productClient.get<Product[]>('/products')
+  const response = await productClient.get<Product[]>('/order/product')
   return response.data
 }
 
 export const getProduct = async (id: string): Promise<Product> => {
-  const response = await productClient.get<Product>(`/products/${id}`)
+  const response = await productClient.get<Product>(`/order/product/${id}`)
   return response.data
 }
 
@@ -50,7 +53,7 @@ export const createProduct = async (
     formData.append('image', product.image)
   }
 
-  const response = await productClient.post<Product>('/products', formData, {
+  const response = await productClient.post<Product>('/order/product', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -84,8 +87,8 @@ export const updateProduct = async (
     formData.append('image', product.image)
   }
 
-  const response = await productClient.put<Product>(
-    `/products/${id}`,
+  const response = await productClient.patch<Product>(
+    `/order/product/${id}`,
     formData,
     {
       headers: {
@@ -97,12 +100,13 @@ export const updateProduct = async (
 }
 
 export const deleteProduct = async (id: string): Promise<void> => {
-  await productClient.delete(`/products/${id}`)
+  await productClient.delete(`/order/product/${id}`)
 }
 
 export const getImageUrl = (imagePath?: string): string => {
   if (!imagePath) {
     return 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400&h=300&fit=crop'
   }
+  // Static files are served directly by seller-service
   return `${SELLER_API_URL}${imagePath}`
 }

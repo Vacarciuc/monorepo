@@ -257,9 +257,8 @@ services:
       context: ./apps/frontend
       dockerfile: Dockerfile.dev
     environment:
-      # Vite expune aceste variabile in browser prin import.meta.env
-      VITE_AUTH_API: ${VITE_AUTH_API}
-      VITE_ORDER_API: ${VITE_ORDER_API}
+
+      VITE_GATEWAY_URL: ${VITE_GATEWAY_URL}
       VITE_SELLER_API: ${VITE_SELLER_API}
     init: true
     ports:

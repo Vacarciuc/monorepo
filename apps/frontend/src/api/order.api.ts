@@ -1,12 +1,13 @@
 import axios from 'axios'
 
 import { authService } from '../services/auth.service'
+import { tokenService } from '../services/token.service'
 import type { CreateOrderRequest, CreateOrderResponse } from '../types/order'
 
-const ORDER_API_URL = import.meta.env.VITE_ORDER_API || 'http://localhost:3003'
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000'
 
 const orderClient = axios.create({
-  baseURL: ORDER_API_URL,
+  baseURL: `${GATEWAY_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -20,8 +21,14 @@ orderClient.interceptors.request.use((config) => {
 })
 
 export const createOrder = async (
-  order: CreateOrderRequest,
+  _order: CreateOrderRequest,
 ): Promise<CreateOrderResponse> => {
-  const response = await orderClient.post<CreateOrderResponse>('/orders', order)
+  // Gateway creates the order directly from the user's cart
+  const userId = tokenService.getUserId()
+  const response = await orderClient.post<CreateOrderResponse>(
+    '/order/orders',
+    {},
+    userId ? { params: { userId } } : {},
+  )
   return response.data
 }

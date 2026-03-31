@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../services/auth.service';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -8,17 +8,29 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, login } = useAuth();
+
+  // Already logged in → go straight to products
+  if (isAuthenticated) {
+    return <Navigate to="/products" replace />;
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      await authService.login({ email, password });
+      await login({ email, password });
       navigate('/products');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      const msg =
+        err.response?.data?.message ||
+        err.response?.status === 404
+          ? 'No account found with that email.'
+          : err.response?.status === 401
+            ? 'Wrong password.'
+            : 'Login failed. Please check your credentials.';
+      setError(Array.isArray(msg) ? msg.join(', ') : msg);
     } finally {
       setLoading(false);
     }
@@ -35,9 +47,7 @@ const LoginPage = () => {
 
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                Email
-              </label>
+              <label htmlFor="email" className="form-label">Email</label>
               <input
                 id="email"
                 type="email"
@@ -46,13 +56,12 @@ const LoginPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
+                autoComplete="email"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="password" className="form-label">
-                Password
-              </label>
+              <label htmlFor="password" className="form-label">Password</label>
               <input
                 id="password"
                 type="password"
@@ -61,23 +70,18 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                autoComplete="current-password"
               />
             </div>
 
-            <button
-              type="submit"
-              className="submit-button"
-              disabled={loading}
-            >
+            <button type="submit" className="submit-button" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
           <p className="auth-footer">
             Don't have an account?{' '}
-            <Link to="/register" className="auth-link">
-              Register here
-            </Link>
+            <Link to="/register" className="auth-link">Register here</Link>
           </p>
         </div>
       </div>
@@ -86,5 +90,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-
-
