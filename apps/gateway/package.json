@@ -27,6 +27,7 @@
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",
     "express": "^5.1.0",
+    "form-data": "^4.0.5",
     "helmet": "^8.1.0",
     "path-to-regexp": "^8.2.0",
     "prom-client": "^15.1.3",

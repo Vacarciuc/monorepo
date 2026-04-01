@@ -6,6 +6,7 @@ import qs from 'qs'
 import { AuthModule } from '@/auth/auth.module'
 import { SellerController } from '@/seller/seller.controller'
 import { SellerService } from '@/seller/seller.service'
+import { UploadsProxyController } from '@/seller/uploads-proxy.controller'
 import { AppEnv } from '@/types/app-env.types'
 
 @Module({
@@ -21,8 +22,10 @@ import { AppEnv } from '@/types/app-env.types'
     AuthModule,
   ],
   providers: [SellerService],
-  controllers: [SellerController],
+  controllers: [SellerController, UploadsProxyController],
   exports: [SellerService],
 })
 export class SellerModule {}
+
+
 

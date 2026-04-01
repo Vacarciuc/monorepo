@@ -19,15 +19,19 @@ productClient.interceptors.request.use((config) => {
   return config
 })
 
+// ── Read (public) — uses seller-service catalog via gateway ──────────────────
+
 export const getProducts = async (): Promise<Product[]> => {
-  const response = await productClient.get<Product[]>('/order/product')
+  const response = await productClient.get<Product[]>('/seller/products')
   return response.data
 }
 
 export const getProduct = async (id: string): Promise<Product> => {
-  const response = await productClient.get<Product>(`/order/product/${id}`)
+  const response = await productClient.get<Product>(`/seller/products/${id}`)
   return response.data
 }
+
+// ── Write (seller role required) — multipart/form-data via gateway ───────────
 
 export const createProduct = async (
   product: CreateProductRequest,
@@ -48,10 +52,8 @@ export const createProduct = async (
     formData.append('image', product.image)
   }
 
-  const response = await productClient.post<Product>('/order/product', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  const response = await productClient.post<Product>('/seller/products', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   })
   return response.data
 }
@@ -82,26 +84,27 @@ export const updateProduct = async (
     formData.append('image', product.image)
   }
 
-  const response = await productClient.patch<Product>(
-    `/order/product/${id}`,
+  const response = await productClient.put<Product>(
+    `/seller/products/${id}`,
     formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    },
+    { headers: { 'Content-Type': 'multipart/form-data' } },
   )
   return response.data
 }
 
 export const deleteProduct = async (id: string): Promise<void> => {
-  await productClient.delete(`/order/product/${id}`)
+  await productClient.delete(`/seller/products/${id}`)
 }
+
 
 export const getImageUrl = (imagePath?: string): string => {
   if (!imagePath) {
     return 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400&h=300&fit=crop'
   }
-  // Use relative path — Vite proxy forwards /uploads → seller-service (no CORS)
+  // Route /uploads/products/xxx.jpg through gateway (/api/v1/uploads/products/xxx.jpg)
+  // so all traffic goes through the single gateway entry point (no CORS)
+  if (imagePath.startsWith('/uploads/')) {
+    return `/api/v1${imagePath}`
+  }
   return imagePath
 }
