@@ -17,8 +17,11 @@ export const deleteUser = async (id: number): Promise<void> => {
 }
 
 export const updateUserRole = async (id: number, role: UserRole): Promise<User> => {
+  // Frontend UserRole este uppercase (CUSTOMER/SELLER/ADMIN)
+  // Gateway UserRole enum: user/seller/admin — mapăm explicit
+  const backendRole = role === 'CUSTOMER' ? 'user' : role === 'SELLER' ? 'seller' : 'admin'
   const response = await apiClient.patch<User>(`/auth/users/${id}/role`, {
-    role: role.toLowerCase(),
+    role: backendRole,
   })
   return normaliseUser(response.data)
 }

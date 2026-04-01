@@ -44,4 +44,8 @@ export const authService = {
   isSeller(): boolean {
     return roleService.isSeller()
   },
+
+  getUsername(): string | null {
+    return tokenService.getUsername()
+  },
 }

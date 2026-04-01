@@ -120,7 +120,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="price" className="form-label">
-                Preț (RON) *
+                Preț (MDL) *
               </label>
               <input
                 id="price"

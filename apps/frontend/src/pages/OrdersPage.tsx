@@ -76,7 +76,7 @@ const OrdersPage = () => {
                     <span className={`order-status status-${order.status?.toLowerCase()}`}>
                       {statusLabel(order.status)}
                     </span>
-                    <span className="order-total">{orderTotal(order).toFixed(2)} RON</span>
+                    <span className="order-total">{orderTotal(order).toFixed(2)} MDL</span>
                     <span className="order-chevron">{expanded === order.id ? '▲' : '▼'}</span>
                   </div>
                 </div>
@@ -99,16 +99,16 @@ const OrdersPage = () => {
                           {order.items.map((item) => (
                             <tr key={item.productId}>
                               <td>{item.name ?? item.productId}</td>
-                              <td>{Number(item.price).toFixed(2)} RON</td>
+                              <td>{Number(item.price).toFixed(2)} MDL</td>
                               <td>{item.quantity}</td>
-                              <td>{(item.price * item.quantity).toFixed(2)} RON</td>
+                              <td>{(item.price * item.quantity).toFixed(2)} MDL</td>
                             </tr>
                           ))}
                         </tbody>
                         <tfoot>
                           <tr>
                             <td colSpan={3}><strong>Total</strong></td>
-                            <td><strong>{orderTotal(order).toFixed(2)} RON</strong></td>
+                            <td><strong>{orderTotal(order).toFixed(2)} MDL</strong></td>
                           </tr>
                         </tfoot>
                       </table>

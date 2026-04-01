@@ -18,6 +18,7 @@ jobs:
         service:
           - auth-service
           - seller-service
+          - order-service
           - frontend
 
     steps:

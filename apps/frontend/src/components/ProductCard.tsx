@@ -64,7 +64,7 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
               ✏️ Editează
             </button>
             <button className="delete-button" onClick={() => onDelete?.(product.id)}>
-              🗑️ Șterge
+              Șterge
             </button>
           </div>
         ) : (

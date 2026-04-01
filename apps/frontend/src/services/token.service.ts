@@ -36,4 +36,18 @@ export const tokenService = {
       return null
     }
   },
+
+  /** Decode JWT payload and return the `username` field. */
+  getUsername(): string | null {
+    const token = this.getToken()
+    if (!token) return null
+    try {
+      const base64Payload = token.split('.')[1]
+      const decoded = atob(base64Payload.replace(/-/g, '+').replace(/_/g, '/'))
+      const payload = JSON.parse(decoded)
+      return payload.username ?? payload.email ?? null
+    } catch {
+      return null
+    }
+  },
 }
