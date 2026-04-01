@@ -1661,3 +1661,35 @@ body {
   padding: 1rem 0;
 }
 
+/* ── Seller Page Tabs ──────────────────────────────────────────────────── */
+.seller-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--light-gray);
+  padding-bottom: 0;
+}
+.seller-tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--gray);
+  cursor: pointer;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.seller-tab:hover {
+  color: var(--primary);
+}
+.seller-tab--active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 700;
+}
+/* Status badge culori pentru comenzi seller */
+.role-pending  { background: #fef3c7; color: #92400e; }
+.role-confirmed { background: #d1fae5; color: #065f46; }
+.role-rejected  { background: #fee2e2; color: #991b1b; }

@@ -43,6 +43,7 @@ describe('SellerController', () => {
           id: '1',
           orderId: 'order-1',
           status: OrderStatus.CONFIRMED,
+          orderItems: [],
           processedAt: new Date(),
           createdAt: new Date(),
         },
@@ -50,7 +51,8 @@ describe('SellerController', () => {
           id: '2',
           orderId: 'order-2',
           status: OrderStatus.PENDING,
-          processedAt: null,
+          orderItems: [],
+          processedAt: null as unknown as Date,
           createdAt: new Date(),
         },
       ];
@@ -70,6 +72,7 @@ describe('SellerController', () => {
         id: '123e4567-e89b-12d3-a456-426614174000',
         orderId: 'order-1',
         status: OrderStatus.CONFIRMED,
+        orderItems: [],
         processedAt: new Date(),
         createdAt: new Date(),
       };
@@ -90,6 +93,7 @@ describe('SellerController', () => {
         id: orderId,
         orderId: 'order-1',
         status: OrderStatus.CONFIRMED,
+        orderItems: [],
         processedAt: new Date(),
         createdAt: new Date(),
       };
@@ -110,6 +114,7 @@ describe('SellerController', () => {
         id: orderId,
         orderId: 'order-1',
         status: OrderStatus.REJECTED,
+        orderItems: [],
         processedAt: new Date(),
         createdAt: new Date(),
       };

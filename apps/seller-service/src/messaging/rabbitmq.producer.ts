@@ -30,35 +30,33 @@ export class RabbitMQProducer implements OnModuleInit, OnModuleDestroy {
       this.connection = amqp.connect([this.config.url]);
 
       this.channelWrapper = this.connection.createChannel({
+        json: true,
         setup: async (channel: ConfirmChannel) => {
+          // Producătorul are nevoie doar de exchange — order-service creează coada de răspuns
           await channel.assertExchange(this.config.exchange, 'topic', {
             durable: true,
           });
-
-          await channel.assertQueue(this.config.queue, { durable: true });
-
-          await channel.bindQueue(
-            this.config.queue,
-            this.config.exchange,
-            this.config.routingKey,
+          this.logger.log(
+            `Producer conectat la exchange "${this.config.exchange}", routing key de publicare: "${this.config.producerRoutingKey}"`,
           );
-
-          this.logger.log(`Queue ${this.config.queue} is ready and bound.`);
         },
       });
-
-      this.logger.log('Producer connected to RabbitMQ');
     } catch (error) {
-      this.logger.error('Failed to connect producer to RabbitMQ', error);
+      this.logger.error('Eroare la conectarea producătorului la RabbitMQ', error);
       throw error;
     }
   }
 
+  /**
+   * Publică un eveniment OrderProcessed (CONFIRMED sau REJECTED) pe exchange-ul
+   * `order.exchange` cu routing key `order.processed`.
+   * Order-service ascultă pe coada `order.status.queue` legată la acest routing key.
+   */
   async publishOrderProcessed(event: OrderProcessedEvent): Promise<void> {
     try {
       await this.channelWrapper.publish(
         this.config.exchange,
-        this.config.routingKey,
+        this.config.producerRoutingKey,
         Buffer.from(JSON.stringify(event)),
         {
           persistent: true,
@@ -67,10 +65,10 @@ export class RabbitMQProducer implements OnModuleInit, OnModuleDestroy {
       );
 
       this.logger.log(
-        `Published OrderProcessed event for order ${event.orderId} with status ${event.status}`,
+        `✅ Publicat OrderProcessedEvent pentru comanda ${event.orderId} cu status ${event.status}`,
       );
     } catch (error) {
-      this.logger.error('Failed to publish OrderProcessed event', error);
+      this.logger.error('Eroare la publicarea OrderProcessedEvent', error);
       throw error;
     }
   }
@@ -79,9 +77,9 @@ export class RabbitMQProducer implements OnModuleInit, OnModuleDestroy {
     try {
       await this.channelWrapper.close();
       await this.connection.close();
-      this.logger.log('Producer disconnected from RabbitMQ');
+      this.logger.log('Deconectat de la RabbitMQ (producer)');
     } catch (error) {
-      this.logger.error('Error disconnecting producer from RabbitMQ', error);
+      this.logger.error('Eroare la deconectarea producătorului', error);
     }
   }
 }

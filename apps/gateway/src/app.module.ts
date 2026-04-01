@@ -10,6 +10,7 @@ import { ENV_CONFIG } from '@/config/env.config'
 import { GLOBAL_VALIDATION_PIPE_CONFIG } from '@/config/global-validation-pipe.config'
 import { HealthModule } from '@/health/health.module'
 import { OrderModule } from '@/order/order.module'
+import { SellerModule } from '@/seller/seller.module'
 import { MetricsModule } from '@/metrics/metrics.module'
 import { TotalRequestsMetricsInterceptor } from '@/metrics/total-requests-metrics.interceptor'
 
@@ -19,30 +20,16 @@ import { TotalRequestsMetricsInterceptor } from '@/metrics/total-requests-metric
     HealthModule,
     AuthModule,
     OrderModule,
+    SellerModule,
     MetricsModule,
   ],
   controllers: [],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: LoggingInterceptor,
-    },
-    {
-      provide: APP_PIPE,
-      useValue: new ValidationPipe(GLOBAL_VALIDATION_PIPE_CONFIG),
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TotalRequestsMetricsInterceptor,
-    },
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
+    { provide: APP_PIPE, useValue: new ValidationPipe(GLOBAL_VALIDATION_PIPE_CONFIG) },
+    { provide: APP_INTERCEPTOR, useClass: TotalRequestsMetricsInterceptor },
   ],
   exports: [],
 })
