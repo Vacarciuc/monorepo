@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
       POSTGRES_DB: ${AUTH_DB_NAME}
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes: [auth-db-data:/var/lib/postgresql/data]
     networks: [marketplace-network]
     healthcheck: &pg-healthcheck

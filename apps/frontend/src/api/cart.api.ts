@@ -3,9 +3,8 @@ import { authService } from '../services/auth.service'
 import { tokenService } from '../services/token.service'
 import type { Cart, CheckoutPayload } from '../types/cart'
 
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000'
-
-const cartClient = axios.create({ baseURL: `${GATEWAY_URL}/api/v1` })
+// Use relative base URL — Vite dev server proxies /api → gateway (no CORS)
+const cartClient = axios.create({ baseURL: '/api/v1' })
 
 cartClient.interceptors.request.use((config) => {
   const authHeader = authService.getAuthHeader()

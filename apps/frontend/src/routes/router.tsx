@@ -5,7 +5,9 @@ import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProductsPage from '../pages/ProductsPage';
 import AdminPage from '../pages/AdminPage';
+import SellerPage from '../pages/SellerPage';
 import CartPage from '../pages/CartPage';
+import OrdersPage from '../pages/OrdersPage';
 import ProtectedRoute from './ProtectedRoute';
 
 const AppRouter = () => {
@@ -21,6 +23,10 @@ const AppRouter = () => {
         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+        {/* /seller — product management (admin + seller) */}
+        <Route path="/seller" element={<ProtectedRoute><SellerPage /></ProtectedRoute>} />
+        {/* /admin — user management (admin only) */}
         <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
 
         {/* Fallback */}

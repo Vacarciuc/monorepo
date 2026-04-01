@@ -72,7 +72,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
 
       await onSubmit(productData);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save product');
+      setError(err.response?.data?.message || 'Eroare la salvarea produsului.');
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
     <div className="product-form-overlay">
       <div className="product-form-container">
         <h2 className="product-form-title">
-          {product ? '✏️ Edit Product' : '➕ Add New Product'}
+          {product ? '✏️ Editează Produsul' : '➕ Adaugă Produs Nou'}
         </h2>
 
         {error && <div className="error-message">{error}</div>}
@@ -90,7 +90,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
         <form onSubmit={handleSubmit} className="product-form">
           <div className="form-group">
             <label htmlFor="name" className="form-label">
-              Product Name *
+              Nume Produs *
             </label>
             <input
               id="name"
@@ -98,21 +98,21 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
               className="form-input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Organic Green Tea"
+              placeholder="ex. Ceai Verde Organic"
               required
             />
           </div>
 
           <div className="form-group">
             <label htmlFor="description" className="form-label">
-              Description
+              Descriere
             </label>
             <textarea
               id="description"
               className="form-textarea"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Product description..."
+              placeholder="Descrierea produsului..."
               rows={4}
             />
           </div>
@@ -120,7 +120,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="price" className="form-label">
-                Price ($) *
+                Preț (RON) *
               </label>
               <input
                 id="price"
@@ -137,7 +137,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
 
             <div className="form-group">
               <label htmlFor="quantity" className="form-label">
-                Stock (units)
+                Stoc (bucăți)
               </label>
               <input
                 id="quantity"
@@ -154,7 +154,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
 
           <div className="form-group">
             <label htmlFor="image" className="form-label">
-              Product Image (Max 10MB)
+              Imagine Produs (Max 10MB)
             </label>
             <input
               id="image"
@@ -164,15 +164,15 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
               onChange={handleImageChange}
             />
             <small className="form-hint">
-              Accepted formats: JPG, PNG, GIF, WebP (Max size: 10MB)
+              Formate acceptate: JPG, PNG, GIF, WebP (Dimensiune maximă: 10MB)
             </small>
             {imagePreview && (
               <div className="image-preview">
                 <img
                   src={imagePreview}
-                  alt="Preview"
+                  alt="Previzualizare"
                   onError={(e) => {
-                    e.currentTarget.src = 'https://via.placeholder.com/150?text=Invalid+Image';
+                    e.currentTarget.src = 'https://via.placeholder.com/150?text=Imagine+Invalidă';
                   }}
                 />
               </div>
@@ -186,14 +186,14 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
               onClick={onCancel}
               disabled={loading}
             >
-              Cancel
+              Anulează
             </button>
             <button
               type="submit"
               className="submit-button"
               disabled={loading}
             >
-              {loading ? 'Saving...' : product ? 'Update Product' : 'Add Product'}
+              {loading ? 'Se salvează...' : product ? 'Actualizează Produsul' : 'Adaugă Produsul'}
             </button>
           </div>
         </form>
@@ -203,6 +203,4 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
 };
 
 export default ProductForm;
-
-
 

@@ -21,7 +21,7 @@ const QuantityModal = ({ product, onConfirm, onClose }: QuantityModalProps) => {
     try {
       await onConfirm(quantity);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add to cart');
+      setError(err.response?.data?.message || 'Nu s-a putut adăuga în coș.');
       setLoading(false);
     }
   };
@@ -42,12 +42,12 @@ const QuantityModal = ({ product, onConfirm, onClose }: QuantityModalProps) => {
           />
           <div className="qty-modal-info">
             <h3 className="qty-modal-name">{product.name}</h3>
-            <p className="qty-modal-price">${Number(product.price).toFixed(2)} / unit</p>
-            <p className="qty-modal-stock">📦 {max} in stock</p>
+            <p className="qty-modal-price">{Number(product.price).toFixed(2)} RON / buc</p>
+            <p className="qty-modal-stock">📦 {max} în stoc</p>
           </div>
         </div>
 
-        <h2 className="qty-modal-title">How many would you like?</h2>
+        <h2 className="qty-modal-title">Câte bucăți dorești?</h2>
 
         {error && <div className="error-message">{error}</div>}
 
@@ -81,16 +81,16 @@ const QuantityModal = ({ product, onConfirm, onClose }: QuantityModalProps) => {
         </div>
 
         <p className="qty-subtotal">
-          Subtotal: <strong>${(Number(product.price) * quantity).toFixed(2)}</strong>
+          Subtotal: <strong>{(Number(product.price) * quantity).toFixed(2)} RON</strong>
         </p>
 
         {/* Actions */}
         <div className="form-actions">
           <button className="cancel-button" onClick={onClose} disabled={loading}>
-            Cancel
+            Anulează
           </button>
-          <button className="submit-button" onClick={handleConfirm} disabled={loading}>
-            {loading ? 'Adding…' : '🛒 Add to Cart'}
+          <button className="submit-button" onClick={handleConfirm} disabled={loading || quantity < 1 || quantity > max}>
+            {loading ? 'Se adaugă...' : '🛒 Adaugă în Coș'}
           </button>
         </div>
       </div>
