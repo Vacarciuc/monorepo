@@ -24,7 +24,7 @@ const ProductsPage = () => {
       setProducts(await getProducts());
     } catch (err: any) {
       if (err.response?.status === 401) navigate('/login');
-      else setError('Failed to load products. Please try again.');
+      else setError('Eroare la încărcarea produselor. Încearcă din nou.');
     } finally {
       setLoading(false);
     }
@@ -39,23 +39,23 @@ const ProductsPage = () => {
     if (!selectedProduct) return;
     await addToCart(selectedProduct.id, quantity);
     setSelectedProduct(null);
-    setSuccessMessage(`✅ "${selectedProduct.name}" added to cart!`);
+    setSuccessMessage(`✅ "${selectedProduct.name}" a fost adăugat în coș!`);
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   return (
     <div className="page-container">
       <div className="products-container">
-        <h1 className="products-title">🌿 Available Products</h1>
-        <p className="products-subtitle">Browse our sustainable marketplace</p>
+        <h1 className="products-title">🌿 Produse Disponibile</h1>
+        <p className="products-subtitle">Răsfoiește piața noastră sustenabilă</p>
 
         {successMessage && <div className="success-message">{successMessage}</div>}
         {error && <div className="error-message">{error}</div>}
 
         {loading ? (
-          <div className="loading">Loading products...</div>
+          <div className="loading">Se încarcă produsele...</div>
         ) : products.length === 0 ? (
-          <div className="empty-state"><p>No products available at the moment.</p></div>
+          <div className="empty-state"><p>Nu există produse disponibile momentan.</p></div>
         ) : (
           <div className="products-grid">
             {products.map((product) => (

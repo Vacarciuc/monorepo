@@ -7,14 +7,9 @@ import type {
   UpdateProductRequest,
 } from '../types/product'
 
-// All requests go through the gateway
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000'
-// Seller service URL is only needed for serving static images
-const SELLER_API_URL =
-  import.meta.env.VITE_SELLER_API || 'http://localhost:3003'
-
+// Use relative base URL — Vite dev server proxies /api → gateway (no CORS)
 const productClient = axios.create({
-  baseURL: `${GATEWAY_URL}/api/v1`,
+  baseURL: '/api/v1',
 })
 
 // Add auth token to requests
@@ -107,6 +102,6 @@ export const getImageUrl = (imagePath?: string): string => {
   if (!imagePath) {
     return 'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400&h=300&fit=crop'
   }
-  // Static files are served directly by seller-service
-  return `${SELLER_API_URL}${imagePath}`
+  // Use relative path — Vite proxy forwards /uploads → seller-service (no CORS)
+  return imagePath
 }

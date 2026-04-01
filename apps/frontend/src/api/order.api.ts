@@ -2,12 +2,11 @@ import axios from 'axios'
 
 import { authService } from '../services/auth.service'
 import { tokenService } from '../services/token.service'
-import type { CreateOrderRequest, CreateOrderResponse } from '../types/order'
+import type { CreateOrderResponse, Order } from '../types/order'
 
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000'
-
+// Use relative base URL — Vite dev server proxies /api → gateway (no CORS)
 const orderClient = axios.create({
-  baseURL: `${GATEWAY_URL}/api/v1`,
+  baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -20,14 +19,29 @@ orderClient.interceptors.request.use((config) => {
   return config
 })
 
-export const createOrder = async (
-  _order: CreateOrderRequest,
-): Promise<CreateOrderResponse> => {
-  // Gateway creates the order directly from the user's cart
+export const createOrder = async (): Promise<CreateOrderResponse> => {
   const userId = tokenService.getUserId()
   const response = await orderClient.post<CreateOrderResponse>(
     '/order/orders',
     {},
+    userId ? { params: { userId } } : {},
+  )
+  return response.data
+}
+
+export const getOrders = async (): Promise<Order[]> => {
+  const userId = tokenService.getUserId()
+  const response = await orderClient.get<Order[]>(
+    '/order/orders',
+    userId ? { params: { userId } } : {},
+  )
+  return response.data
+}
+
+export const getOrder = async (id: string): Promise<Order> => {
+  const userId = tokenService.getUserId()
+  const response = await orderClient.get<Order>(
+    `/order/orders/${id}`,
     userId ? { params: { userId } } : {},
   )
   return response.data

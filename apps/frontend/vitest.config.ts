@@ -8,10 +8,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/tests/setup.ts',
     exclude: [
-      "node_modules",
-      "dist",
-      "src/tests/unit/Navbar.test.tsx",
-      "src/tests/unit/authService.test.ts"
-    ]
+      'node_modules',
+      'dist',
+    ],
   },
 })

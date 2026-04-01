@@ -42,7 +42,7 @@ const CartPage = () => {
         setCart(await updateCartItem(item.productId, newQty));
       }
     } catch (e: any) {
-      setError(e.response?.data?.message || 'Could not update item');
+      setError(e.response?.data?.message || 'Nu s-a putut actualiza produsul.');
     }
   };
 
@@ -51,16 +51,16 @@ const CartPage = () => {
       setError('');
       setCart(await removeCartItem(productId));
     } catch {
-      setError('Could not remove item');
+      setError('Nu s-a putut elimina produsul.');
     }
   };
 
   const handleClear = async () => {
-    if (!confirm('Clear the entire cart?')) return;
+    if (!confirm('Golești tot coșul?')) return;
     try {
       setCart(await clearCart());
     } catch {
-      setError('Could not clear cart');
+      setError('Nu s-a putut goli coșul.');
     }
   };
 
@@ -68,14 +68,12 @@ const CartPage = () => {
     setOrderLoading(true);
     setError('');
     try {
-      const payload = await checkout();
-      // TODO: send `payload` to order-service via RabbitMQ / HTTP
-      console.log('Order payload ready for RabbitMQ:', payload);
-      setSuccess('🎉 Order placed successfully! We\'ll process it shortly.');
+      await checkout();
+      setSuccess('🎉 Comanda a fost plasată cu succes! O vom procesa în curând.');
       setCart(await clearCart());
       setTimeout(() => setSuccess(''), 5000);
     } catch (e: any) {
-      setError(e.response?.data?.message || 'Could not place order');
+      setError(e.response?.data?.message || 'Nu s-a putut plasa comanda.');
     } finally {
       setOrderLoading(false);
     }
@@ -92,18 +90,18 @@ const CartPage = () => {
   return (
     <div className="page-container">
       <div className="cart-container">
-        <h1 className="cart-title">🛒 My Cart</h1>
+        <h1 className="cart-title">🛒 Coșul Meu</h1>
 
         {success && <div className="success-message">{success}</div>}
         {error   && <div className="error-message">{error}</div>}
 
         {loading ? (
-          <div className="loading">Loading cart…</div>
+          <div className="loading">Se încarcă coșul...</div>
         ) : items.length === 0 ? (
           <div className="empty-state">
-            <p>Your cart is empty.</p>
+            <p>Coșul tău este gol.</p>
             <button className="submit-button cart-shop-btn" onClick={() => navigate('/products')}>
-              Browse Products
+              Vezi Produse
             </button>
           </div>
         ) : (
@@ -120,64 +118,54 @@ const CartPage = () => {
                   />
                   <div className="cart-item-details">
                     <p className="cart-item-name">{item.name}</p>
-                    <p className="cart-item-unit-price">${item.price.toFixed(2)} / unit</p>
+                    <p className="cart-item-unit-price">{item.price.toFixed(2)} RON / buc</p>
                   </div>
                   <div className="cart-item-qty">
-                    <button
-                      className="qty-btn"
-                      onClick={() => handleQuantityChange(item, item.quantity - 1)}
-                    >−</button>
+                    <button className="qty-btn" onClick={() => handleQuantityChange(item, item.quantity - 1)}>−</button>
                     <span className="qty-display">{item.quantity}</span>
-                    <button
-                      className="qty-btn"
-                      onClick={() => handleQuantityChange(item, item.quantity + 1)}
-                    >+</button>
+                    <button className="qty-btn" onClick={() => handleQuantityChange(item, item.quantity + 1)}>+</button>
                   </div>
                   <p className="cart-item-subtotal">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {(item.price * item.quantity).toFixed(2)} RON
                   </p>
-                  <button
-                    className="cart-remove-btn"
-                    title="Remove item"
-                    onClick={() => handleRemove(item.productId)}
-                  >✕</button>
+                  <button className="cart-remove-btn" title="Elimină" onClick={() => handleRemove(item.productId)}>✕</button>
                 </div>
               ))}
 
               <button className="cart-clear-btn" onClick={handleClear}>
-                🗑️ Clear cart
+                🗑️ Golește coșul
               </button>
             </div>
 
             {/* ── Summary panel ──────────────────────────────────────── */}
             <div className="cart-summary">
-              <h2 className="cart-summary-title">Order Summary</h2>
+              <h2 className="cart-summary-title">Sumar Comandă</h2>
 
               <div className="cart-summary-row">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{subtotal.toFixed(2)} RON</span>
               </div>
               <div className="cart-summary-row">
-                <span>VAT (19%)</span>
-                <span>${vat.toFixed(2)}</span>
+                <span>TVA (19%)</span>
+                <span>{vat.toFixed(2)} RON</span>
               </div>
               <div className="cart-summary-row">
-                <span>Shipping</span>
+                <span>Transport</span>
                 <span>
                   {shipping === 0
-                    ? <span className="free-shipping">FREE</span>
-                    : `$${shipping.toFixed(2)}`}
+                    ? <span className="free-shipping">GRATUIT</span>
+                    : `${shipping.toFixed(2)} RON`}
                 </span>
               </div>
               {shipping > 0 && (
                 <p className="shipping-hint">
-                  Add ${(SHIPPING_THRESHOLD - subtotal).toFixed(2)} more for free shipping
+                  Adaugă încă {(SHIPPING_THRESHOLD - subtotal).toFixed(2)} RON pentru transport gratuit
                 </p>
               )}
               <div className="cart-summary-divider" />
               <div className="cart-summary-total">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{total.toFixed(2)} RON</span>
               </div>
 
               <button
@@ -185,14 +173,14 @@ const CartPage = () => {
                 onClick={handleOrder}
                 disabled={orderLoading || items.length === 0}
               >
-                {orderLoading ? 'Placing order…' : '✅ Place Order'}
+                {orderLoading ? 'Se plasează comanda...' : '✅ Plasează Comanda'}
               </button>
 
               <button
                 className="cancel-button cart-continue-btn"
                 onClick={() => navigate('/products')}
               >
-                ← Continue Shopping
+                ← Continuă Cumpărăturile
               </button>
             </div>
           </div>

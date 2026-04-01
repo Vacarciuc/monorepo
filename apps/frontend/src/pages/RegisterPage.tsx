@@ -22,11 +22,11 @@ const RegisterPage = () => {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Parolele nu se potrivesc.');
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError('Parola trebuie să aibă cel puțin 8 caractere.');
       return;
     }
 
@@ -40,10 +40,10 @@ const RegisterPage = () => {
       const data = err.response?.data;
       const msg =
         err.response?.status === 409
-          ? 'An account with this email already exists.'
+          ? 'Un cont cu acest email există deja.'
           : Array.isArray(data?.message)
             ? data.message.join(', ')
-            : data?.message || 'Registration failed. Please try again.';
+            : data?.message || 'Înregistrare eșuată. Încearcă din nou.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -54,8 +54,8 @@ const RegisterPage = () => {
     <div className="page-container">
       <div className="auth-container">
         <div className="auth-card">
-          <h1 className="auth-title">🌿 Join GreenMarket</h1>
-          <p className="auth-subtitle">Create your account</p>
+          <h1 className="auth-title">🌿 Alătură-te GreenMarket</h1>
+          <p className="auth-subtitle">Creează-ți contul</p>
 
           {error && <div className="error-message">{error}</div>}
 
@@ -68,21 +68,21 @@ const RegisterPage = () => {
                 className="form-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder="email@exemplu.com"
                 required
                 autoComplete="email"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="username" className="form-label">Username</label>
+              <label htmlFor="username" className="form-label">Nume utilizator</label>
               <input
                 id="username"
                 type="text"
                 className="form-input"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="your_username"
+                placeholder="nume_utilizator"
                 required
                 minLength={3}
                 maxLength={30}
@@ -91,7 +91,7 @@ const RegisterPage = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="password" className="form-label">Password</label>
+              <label htmlFor="password" className="form-label">Parolă</label>
               <input
                 id="password"
                 type="password"
@@ -106,7 +106,7 @@ const RegisterPage = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="form-label">Confirmă Parola</label>
               <input
                 id="confirmPassword"
                 type="password"
@@ -121,13 +121,13 @@ const RegisterPage = () => {
             </div>
 
             <button type="submit" className="submit-button" disabled={loading}>
-              {loading ? 'Creating account...' : 'Register'}
+              {loading ? 'Se creează contul...' : 'Înregistrare'}
             </button>
           </form>
 
           <p className="auth-footer">
-            Already have an account?{' '}
-            <Link to="/login" className="auth-link">Login here</Link>
+            Ai deja cont?{' '}
+            <Link to="/login" className="auth-link">Conectează-te aici</Link>
           </p>
         </div>
       </div>

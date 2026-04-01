@@ -9,9 +9,11 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    getCart()
-      .then((c) => setCartCount(c.items.reduce((s, i) => s + i.quantity, 0)))
-      .catch(() => {});
+    if (isAuthenticated) {
+      getCart()
+        .then((c) => setCartCount(c.items.reduce((s, i) => s + i.quantity, 0)))
+        .catch(() => {});
+    }
   }, [isAuthenticated]);
 
   const handleLogout = () => {
@@ -24,32 +26,40 @@ const Navbar = () => {
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">🌿 GreenMarket</Link>
         <div className="navbar-menu">
-          {isAuthenticated &&
-            <Link to="/products" className="navbar-link">Products</Link>
-          }
 
-          {!isAdmin && !isSeller && (
-            <Link to="/cart" className="navbar-link navbar-cart-link">
-              🛒 Cart
-              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-            </Link>
+          {/* Produse — vizibil pentru toți autentificați */}
+          {isAuthenticated && (
+            <Link to="/products" className="navbar-link">Produse</Link>
           )}
 
-          { isAuthenticated && (isAdmin || isSeller) && (
+          {/* Coș + Comenzile mele — doar clienți */}
+          {isAuthenticated && !isAdmin && !isSeller && (
             <>
-              <Link to="/admin" className="navbar-link admin-link">
-                {isSeller ? 'My Products' : 'Admin Panel'}
-              </Link>
               <Link to="/cart" className="navbar-link navbar-cart-link">
-                🛒 Cart
+                🛒 Coș
                 {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
               </Link>
+              <Link to="/orders" className="navbar-link">📋 Comenzile Mele</Link>
             </>
           )}
 
-          {isAuthenticated &&
-            <button onClick={handleLogout} className="navbar-button">Logout</button>
-          }
+          {/* Vânzător — gestionare produse */}
+          {isAuthenticated && (isAdmin || isSeller) && (
+            <Link to="/seller" className="navbar-link admin-link">
+              📦 {isSeller ? 'Produsele Mele' : 'Produse'}
+            </Link>
+          )}
+
+          {/* Admin — gestionare utilizatori (doar admin) */}
+          {isAuthenticated && isAdmin && (
+            <Link to="/admin" className="navbar-link admin-link">
+              🛠️ Utilizatori
+            </Link>
+          )}
+
+          {isAuthenticated && (
+            <button onClick={handleLogout} className="navbar-button">Deconectare</button>
+          )}
         </div>
       </div>
     </nav>

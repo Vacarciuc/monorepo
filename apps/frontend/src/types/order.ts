@@ -1,19 +1,23 @@
-export interface Order {
-  id?: string
+export interface OrderItem {
   productId: string
+  name: string
+  price: number
   quantity: number
-  status?: string
 }
 
-export interface CreateOrderRequest {
-  productId: string
-  quantity: number
+export interface Order {
+  id: string
+  userId: string
+  status: string
+  items: OrderItem[]
+  total?: number
+  createdAt?: string
 }
+
+export interface CreateOrderRequest {}
 
 export interface CreateOrderResponse {
   id: string
-  productId: string
-  quantity: number
   status: string
-  message: string
+  message?: string
 }

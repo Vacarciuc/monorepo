@@ -1,9 +1,11 @@
 export type UserRole = 'CUSTOMER' | 'ADMIN' | 'SELLER'
 
 export interface User {
-  id: string
+  id: number
   email: string
+  username: string
   role: UserRole
+  createdAt: string
 }
 
 export interface LoginRequest {

@@ -1,11 +1,10 @@
 import axios from 'axios'
 import { authService } from '../services/auth.service'
 
-// All requests go through the gateway (port 3000 in dev)
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000'
-
+// Use relative base URL — Vite dev server proxies /api → gateway (no CORS).
+// In Docker the proxy target is http://gateway:3000 (set via GATEWAY_PROXY_TARGET in Dockerfile.dev).
 const apiClient = axios.create({
-  baseURL: `${GATEWAY_URL}/api/v1`,
+  baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },

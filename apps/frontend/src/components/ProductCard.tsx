@@ -36,10 +36,10 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
           }}
         />
         {!inStock && (
-          <div className="out-of-stock-badge">Out of Stock</div>
+          <div className="out-of-stock-badge">Stoc Epuizat</div>
         )}
         {!hasImage && imgLoaded && (
-          <div className="no-photo-badge">📷 No photo</div>
+          <div className="no-photo-badge">📷 Fără foto</div>
         )}
       </div>
 
@@ -53,7 +53,7 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
         )}
         <p className="product-price">${Number(product.price).toFixed(2)}</p>
         <p className={`product-stock ${inStock ? 'in-stock' : 'no-stock'}`}>
-          {inStock ? `📦 ${product.quantity} units in stock` : '❌ Out of stock'}
+          {inStock ? `📦 ${product.quantity} buc în stoc` : '❌ Stoc epuizat'}
         </p>
       </div>
 
@@ -61,10 +61,10 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
         {isAdmin ? (
           <div className="admin-actions">
             <button className="edit-button" onClick={() => onEdit?.(product)}>
-              ✏️ Edit
+              ✏️ Editează
             </button>
             <button className="delete-button" onClick={() => onDelete?.(product.id)}>
-              🗑️ Delete
+              🗑️ Șterge
             </button>
           </div>
         ) : (
@@ -74,7 +74,7 @@ const ProductCard = ({ product, onBuy, onEdit, onDelete, isAdmin = false }: Prod
               onClick={() => onBuy(product.id)}
               disabled={!inStock}
             >
-              🛒 BUY
+              🛒 CUMPĂRĂ
             </button>
           )
         )}

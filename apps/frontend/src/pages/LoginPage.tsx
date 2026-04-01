@@ -40,8 +40,8 @@ const LoginPage = () => {
     <div className="page-container">
       <div className="auth-container">
         <div className="auth-card">
-          <h1 className="auth-title">🌿 Welcome Back</h1>
-          <p className="auth-subtitle">Sign in to your account</p>
+          <h1 className="auth-title">🌿 Bine ai revenit</h1>
+          <p className="auth-subtitle">Conectează-te la contul tău</p>
 
           {error && <div className="error-message">{error}</div>}
 
@@ -54,14 +54,14 @@ const LoginPage = () => {
                 className="form-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder="email@exemplu.com"
                 required
                 autoComplete="email"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="password" className="form-label">Password</label>
+              <label htmlFor="password" className="form-label">Parolă</label>
               <input
                 id="password"
                 type="password"
@@ -75,13 +75,13 @@ const LoginPage = () => {
             </div>
 
             <button type="submit" className="submit-button" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Se conectează...' : 'Conectare'}
             </button>
           </form>
 
           <p className="auth-footer">
-            Don't have an account?{' '}
-            <Link to="/register" className="auth-link">Register here</Link>
+            Nu ai cont?{' '}
+            <Link to="/register" className="auth-link">Înregistrează-te aici</Link>
           </p>
         </div>
       </div>
