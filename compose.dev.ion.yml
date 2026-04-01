@@ -40,12 +40,14 @@ services:
       DB_USER: ${AUTH_DB_USER}
       DB_PASSWORD: ${AUTH_DB_PASSWORD}
       DB_NAME: ${AUTH_DB_NAME}
-      CORS_ORIGIN: "http://localhost:3000"
+      CORS_ORIGIN: "http://localhost:5174,http://localhost:3000"
       CORS_HEADERS: "*"
       CORS_METHODS: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
       JWT_SECRET: "1234567890"
       JWT_TTL: "24h"
       JWT_AUD: "dasi"
+      ADMIN_EMAIL: "admin@marketplace.com"
+      ADMIN_PASSWORD: "Admin@123!"
     init: true
     ports:
       - "3001:3000"
@@ -87,11 +89,20 @@ services:
       NODE_ENV: development
       HOST: 0.0.0.0
       PORT: "3000"
-      CORS_ORIGIN: "http://localhost:3000"
+      CORS_ORIGIN: "http://localhost:5174,http://localhost:3000"
       CORS_HEADERS: "*"
       CORS_METHODS: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+      # Auth service
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: "3000"
       AUTH_SERVICE_URL: "http://auth-service:3000"
+      # Order service
+      ORDER_SERVICE_HOST: order-service
+      ORDER_SERVICE_PORT: "3000"
       ORDER_SERVICE_URL: "http://order-service:3000"
+      # Seller service
+      SELLER_SERVICE_HOST: seller-service
+      SELLER_SERVICE_PORT: "3000"
       SELLER_SERVICE_URL: "http://seller-service:3000"
     init: true
     ports:
@@ -257,9 +268,8 @@ services:
       context: ./apps/frontend
       dockerfile: Dockerfile.dev
     environment:
-
-      VITE_GATEWAY_URL: ${VITE_GATEWAY_URL}
-      VITE_SELLER_API: ${VITE_SELLER_API}
+      # Used by vite.config.ts process.env.GATEWAY_PROXY_TARGET (server-side proxy target)
+      GATEWAY_PROXY_TARGET: "http://gateway:3000"
     init: true
     ports:
       - "5174:5173"
