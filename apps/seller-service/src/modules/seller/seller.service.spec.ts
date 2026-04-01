@@ -9,6 +9,7 @@ import {
 import { OrderCreatedEvent, OrderItem } from '../../dto/order-created.event';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { RabbitMQConsumer } from '../../messaging/rabbitmq.consumer';
+import { RabbitMQProducer } from '../../messaging/rabbitmq.producer';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,7 @@ describe('SellerService', () => {
   let service: SellerService;
   let repository: jest.Mocked<Repository<SellerOrder>>;
   let rabbitMQConsumer: jest.Mocked<RabbitMQConsumer>;
+  let rabbitMQProducer: jest.Mocked<RabbitMQProducer>;
   let dataSourceMock: ReturnType<typeof buildDataSourceMock>;
 
   const mockRepository = {
@@ -93,6 +95,10 @@ describe('SellerService', () => {
   const mockRabbitMQConsumer = {
     acknowledgeOrder: jest.fn(),
     rejectOrder: jest.fn(),
+  };
+
+  const mockRabbitMQProducer = {
+    publishOrderProcessed: jest.fn().mockResolvedValue(undefined),
   };
 
   /** Re-creates the module with a fresh DataSource mock each test */
@@ -108,12 +114,14 @@ describe('SellerService', () => {
         { provide: getRepositoryToken(SellerOrder), useValue: mockRepository },
         { provide: getDataSourceToken(), useValue: ds },
         { provide: RabbitMQConsumer, useValue: mockRabbitMQConsumer },
+        { provide: RabbitMQProducer, useValue: mockRabbitMQProducer },
       ],
     }).compile();
 
     service = module.get<SellerService>(SellerService);
     repository = module.get(getRepositoryToken(SellerOrder));
     rabbitMQConsumer = module.get(RabbitMQConsumer);
+    rabbitMQProducer = module.get(RabbitMQProducer);
   }
 
   beforeEach(async () => {
@@ -233,6 +241,10 @@ describe('SellerService', () => {
       expect(mockRabbitMQConsumer.acknowledgeOrder).toHaveBeenCalledWith(
         order.orderId,
       );
+      expect(mockRabbitMQProducer.publishOrderProcessed).toHaveBeenCalledWith({
+        orderId: order.orderId,
+        status: OrderStatus.CONFIRMED,
+      });
     });
 
     it('throws BadRequestException if order is already CONFIRMED', async () => {
@@ -329,6 +341,10 @@ describe('SellerService', () => {
       expect(mockRabbitMQConsumer.rejectOrder).toHaveBeenCalledWith(
         order.orderId,
       );
+      expect(mockRabbitMQProducer.publishOrderProcessed).toHaveBeenCalledWith({
+        orderId: order.orderId,
+        status: OrderStatus.REJECTED,
+      });
       // No transaction needed for reject
       expect(dataSourceMock.transaction).not.toHaveBeenCalled();
     });

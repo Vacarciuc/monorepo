@@ -22,7 +22,7 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
   private channelWrapper: ChannelWrapper;
   private readonly config = getRabbitMQConfig();
 
-  // Store messages waiting for manual confirmation
+  // Mesaje care așteaptă confirmare manuală
   private pendingMessages = new Map<
     string,
     { msg: ConsumeMessage; channel: ConfirmChannel }
@@ -43,30 +43,29 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
 
   private async connect(): Promise<void> {
     try {
-      this.logger.log(`Connecting to RabbitMQ at ${this.config.url}`);
+      this.logger.log(`Conectare la RabbitMQ: ${this.config.url}`);
       this.connection = amqp.connect([this.config.url]);
 
-      // Combine EVERYTHING into the channel creation setup
       this.channelWrapper = this.connection.createChannel({
         setup: async (channel: ConfirmChannel) => {
-          this.logger.log(`Setting up channel and queue: ${this.config.queue}`);
+          this.logger.log(`Configurare canal și coadă: ${this.config.queue}`);
 
-          // 1. Assert Exchange
+          // 1. Assert exchange
           await channel.assertExchange(this.config.exchange, 'topic', {
             durable: true,
           });
 
-          // 2. Assert Queue
+          // 2. Assert coadă consumer
           await channel.assertQueue(this.config.queue, { durable: true });
 
-          // 3. Bind Queue
+          // 3. Bind cu consumerRoutingKey (ex: order.created.*)
           await channel.bindQueue(
             this.config.queue,
             this.config.exchange,
-            this.config.routingKey,
+            this.config.consumerRoutingKey,
           );
 
-          // 4. START CONSUMING HERE (Inside the same setup block)
+          // 4. Start consuming
           await channel.consume(
             this.config.queue,
             async (msg: ConsumeMessage | null) => {
@@ -78,58 +77,14 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
           );
 
           this.logger.log(
-            `✅ Queue ${this.config.queue} is bound and consuming.`,
+            `✅ Coada ${this.config.queue} legată cu routing key "${this.config.consumerRoutingKey}" și consumă mesaje.`,
           );
         },
       });
-
-      // REMOVE this.startConsuming() from here!
     } catch (error) {
-      this.logger.error('Failed to connect to RabbitMQ', error);
+      this.logger.error('Eroare la conectarea la RabbitMQ', error);
       throw error;
     }
-  }
-  private async setupChannel(channel: ConfirmChannel): Promise<void> {
-    this.logger.log(
-      `Setting up channel with exchange: ${this.config.exchange}`,
-    );
-
-    // Declare exchange
-    await channel.assertExchange(this.config.exchange, 'topic', {
-      durable: true,
-    });
-
-    // Declare queue
-    await channel.assertQueue(this.config.queue, {
-      durable: true,
-    });
-
-    // Bind queue to exchange
-    await channel.bindQueue(
-      this.config.queue,
-      this.config.exchange,
-      this.config.routingKey,
-    );
-
-    this.logger.log(
-      `Queue ${this.config.queue} bound to exchange ${this.config.exchange} with routing key ${this.config.routingKey}`,
-    );
-  }
-
-  private async startConsuming(): Promise<void> {
-    await this.channelWrapper.addSetup((channel: ConfirmChannel) => {
-      return channel.consume(
-        this.config.queue,
-        async (msg: ConsumeMessage | null) => {
-          if (msg) {
-            await this.handleMessage(msg, channel);
-          }
-        },
-        { noAck: false },
-      );
-    });
-
-    this.logger.log(`Started consuming messages from ${this.config.queue}`);
   }
 
   private async handleMessage(
@@ -138,54 +93,53 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
   ): Promise<void> {
     try {
       const content = msg.content.toString();
-      this.logger.log(`Received message: ${content}`);
+      this.logger.log(`Mesaj primit: ${content}`);
 
       const eventData = JSON.parse(content);
       const event = plainToInstance(OrderCreatedEvent, eventData);
 
-      // Validate event
       const errors = await validate(event);
       if (errors.length > 0) {
-        this.logger.error('Invalid event data', errors);
-        channel.nack(msg, false, false); // Don't requeue invalid messages
+        this.logger.error('Date eveniment invalide', errors);
+        channel.nack(msg, false, false);
         return;
       }
 
-      // Process the order (save as PENDING)
+      // Salvează comanda ca PENDING
       await this.sellerService.processOrder(event);
 
-      // Store message for later acknowledgment (when manually confirmed)
+      // Stochează mesajul pentru confirmare ulterioară
       this.pendingMessages.set(event.orderId, { msg, channel });
       this.logger.log(
-        `Message stored for order ${event.orderId}, waiting for manual confirmation`,
+        `Mesaj stocat pentru comanda ${event.orderId}, așteptare confirmare manuală`,
       );
     } catch (error) {
-      this.logger.error('Error handling message', error);
-      channel.nack(msg, false, true); // Requeue on error
+      this.logger.error('Eroare la procesarea mesajului', error);
+      channel.nack(msg, false, true);
     }
   }
 
-  // Method to acknowledge message when order is confirmed
+  /** ACK mesaj — apelat după confirmare */
   async acknowledgeOrder(orderId: string): Promise<void> {
     const pending = this.pendingMessages.get(orderId);
     if (pending) {
       pending.channel.ack(pending.msg);
       this.pendingMessages.delete(orderId);
-      this.logger.log(`✅ Message acknowledged for order ${orderId}`);
+      this.logger.log(`✅ Mesaj ACK pentru comanda ${orderId}`);
     } else {
-      this.logger.warn(`No pending message found for order ${orderId}`);
+      this.logger.warn(`Niciun mesaj pending pentru comanda ${orderId}`);
     }
   }
 
-  // Method to reject message when order is rejected
+  /** NACK mesaj — apelat după respingere */
   async rejectOrder(orderId: string): Promise<void> {
     const pending = this.pendingMessages.get(orderId);
     if (pending) {
-      pending.channel.nack(pending.msg, false, false); // Don't requeue
+      pending.channel.nack(pending.msg, false, false);
       this.pendingMessages.delete(orderId);
-      this.logger.log(`❌ Message rejected for order ${orderId}`);
+      this.logger.log(`❌ Mesaj NACK pentru comanda ${orderId}`);
     } else {
-      this.logger.warn(`No pending message found for order ${orderId}`);
+      this.logger.warn(`Niciun mesaj pending pentru comanda ${orderId}`);
     }
   }
 
@@ -193,9 +147,9 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
     try {
       await this.channelWrapper.close();
       await this.connection.close();
-      this.logger.log('Disconnected from RabbitMQ');
+      this.logger.log('Deconectat de la RabbitMQ (consumer)');
     } catch (error) {
-      this.logger.error('Error disconnecting from RabbitMQ', error);
+      this.logger.error('Eroare la deconectare RabbitMQ', error);
     }
   }
 }
