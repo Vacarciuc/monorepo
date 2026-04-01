@@ -8,5 +8,6 @@ export const authEndpoints = {
 
   findUser: compile('users/:id'),
   findUsers: compile('users'),
-  deleteUser: compile('users'),
+  updateUserRole: compile('users/:id/role'),
+  deleteUser: compile('users/:id'),
 }

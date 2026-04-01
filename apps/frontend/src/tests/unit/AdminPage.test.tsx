@@ -11,15 +11,20 @@ vi.mock('../../api/user.api', () => ({
   updateUserRole: vi.fn(),
 }));
 
-const renderAdmin = (role?: 'ADMIN' | 'CUSTOMER' | 'SELLER') =>
+const renderAdmin = () =>
   render(
     <AuthProvider>
       <MemoryRouter initialEntries={['/admin']}>
         <Routes>
           <Route path="/login" element={<div>Pagina Login</div>} />
+          <Route path="/" element={<div>Acasă</div>} />
           <Route
             path="/admin"
-            element={<ProtectedRoute><AdminPage /></ProtectedRoute>}
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminPage />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </MemoryRouter>
@@ -32,10 +37,11 @@ describe('AdminPage', () => {
   });
 
   it('este accesibilă doar utilizatorilor cu rol ADMIN — neautentificatul este redirecționat la /login', () => {
-    // Neautentificat → redirecționare
     renderAdmin();
     expect(screen.getByText('Pagina Login')).toBeInTheDocument();
     expect(screen.queryByText(/panou administrare/i)).not.toBeInTheDocument();
   });
 });
+
+
 

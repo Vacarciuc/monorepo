@@ -5,8 +5,6 @@ import { AuthProvider } from '../../context/AuthContext';
 import CartPage from '../../pages/CartPage';
 import ProtectedRoute from '../../routes/ProtectedRoute';
 
-// ── Mocks ──────────────────────────────────────────────────────────────────
-
 vi.mock('../../api/cart.api', () => ({
   getCart: vi.fn().mockResolvedValue({ items: [] }),
   updateCartItem: vi.fn(),
@@ -24,27 +22,30 @@ const renderCart = () =>
       <MemoryRouter initialEntries={['/cart']}>
         <Routes>
           <Route path="/login" element={<div>Pagina Login</div>} />
+          <Route path="/" element={<div>Acasă</div>} />
           <Route
             path="/cart"
-            element={<ProtectedRoute><CartPage /></ProtectedRoute>}
+            element={
+              <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                <CartPage />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </MemoryRouter>
     </AuthProvider>,
   );
 
-// ── Tests ─────────────────────────────────────────────────────────────────
-
 describe('CartPage', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it('redirecționează la /login utilizatorii neautentificați — pagina este disponibilă doar utilizatorilor autentificați', () => {
-    // Niciun token → neautentificat
+  it('este accesibilă doar utilizatorilor cu rol CUSTOMER — neautentificatul este redirecționat la /login', () => {
     renderCart();
-
     expect(screen.getByText('Pagina Login')).toBeInTheDocument();
     expect(screen.queryByText(/coșul meu/i)).not.toBeInTheDocument();
   });
 });
+
+
