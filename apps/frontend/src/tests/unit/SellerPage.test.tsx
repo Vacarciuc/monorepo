@@ -19,9 +19,14 @@ const renderSeller = () =>
       <MemoryRouter initialEntries={['/seller']}>
         <Routes>
           <Route path="/login" element={<div>Pagina Login</div>} />
+          <Route path="/" element={<div>Acasă</div>} />
           <Route
             path="/seller"
-            element={<ProtectedRoute><SellerPage /></ProtectedRoute>}
+            element={
+              <ProtectedRoute allowedRoles={['SELLER', 'ADMIN']}>
+                <SellerPage />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </MemoryRouter>
@@ -34,10 +39,11 @@ describe('SellerPage', () => {
   });
 
   it('este accesibilă doar pentru utilizatori cu rol SELLER sau ADMIN — neautentificatul este redirecționat', () => {
-    // Neautentificat → redirecționare la /login
     renderSeller();
     expect(screen.getByText('Pagina Login')).toBeInTheDocument();
     expect(screen.queryByText(/gestionare produse/i)).not.toBeInTheDocument();
   });
 });
+
+
 

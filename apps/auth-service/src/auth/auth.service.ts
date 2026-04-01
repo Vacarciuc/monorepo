@@ -168,4 +168,26 @@ export class AuthService {
       throw new NotFoundException(`User ${id} not found`)
     }
   }
+
+  async updateRole(id: number, role: UserRole): Promise<User> {
+    const user = await this.findOne(id)
+    user.role = role
+    return this.userRepo.save(user)
+  }
+
+  async seedAdmin(): Promise<void> {
+    const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@marketplace.com'
+    const exists = await this.existsEmail(adminEmail)
+    if (!exists) {
+      const user = new User()
+      user.email = adminEmail
+      user.username = 'admin'
+      user.password = await this.cryptoService.hash(
+        process.env.ADMIN_PASSWORD ?? 'Admin@123!',
+      )
+      user.role = UserRole.Admin
+      user.createdAt = new Date()
+      await this.userRepo.save(user)
+    }
+  }
 }

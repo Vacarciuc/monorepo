@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import { CryptoModule } from '@/crypto/crypto.module'
 import { User } from '@/entities'
 
+import { AdminSeedService } from './admin-seed.service'
 import { AuthController } from './auth.controller'
 import { AuthGuard } from './auth.guard'
 import { AuthService } from './auth.service'
@@ -13,7 +14,7 @@ import { AuthService } from './auth.service'
 @Module({
   imports: [forwardRef(() => CryptoModule), TypeOrmModule.forFeature([User])],
   controllers: [AuthController],
-  providers: [AuthGuard, AuthService, JwtService],
+  providers: [AuthGuard, AuthService, JwtService, AdminSeedService],
   exports: [AuthGuard, AuthService],
 })
 export class AuthModule {}

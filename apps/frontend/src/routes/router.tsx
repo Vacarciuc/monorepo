@@ -19,15 +19,47 @@ const AppRouter = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected routes — redirect to /login if no valid JWT cookie */}
+        {/* Protected routes — any authenticated user */}
         <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
-        <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
-        <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-        {/* /seller — product management (admin + seller) */}
-        <Route path="/seller" element={<ProtectedRoute><SellerPage /></ProtectedRoute>} />
-        {/* /admin — user management (admin only) */}
-        <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+
+        {/* Cart and orders — CUSTOMER only */}
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute allowedRoles={['CUSTOMER']}>
+              <CartPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute allowedRoles={['CUSTOMER']}>
+              <OrdersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Product management — SELLER and ADMIN */}
+        <Route
+          path="/seller"
+          element={
+            <ProtectedRoute allowedRoles={['SELLER', 'ADMIN']}>
+              <SellerPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* User management — ADMIN only */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />

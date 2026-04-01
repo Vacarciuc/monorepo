@@ -28,7 +28,7 @@ export const Authorize = () =>
 
 export const ROLE_METADATA_KEY = 'role'
 
-export const RoleHierarchy = [UserRole.User]
+export const RoleHierarchy = [UserRole.User, UserRole.Seller, UserRole.Admin]
 
 export const Role = (role: UserRole) =>
   applyDecorators(
