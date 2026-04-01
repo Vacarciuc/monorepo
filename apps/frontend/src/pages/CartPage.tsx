@@ -178,7 +178,7 @@ const CartPage = () => {
               ))}
 
               <button className="cart-clear-btn" onClick={handleClear}>
-                🗑️ Golește coșul
+                Golește coșul
               </button>
             </div>
 

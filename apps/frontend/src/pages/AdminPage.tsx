@@ -40,7 +40,7 @@ const AdminPage = () => {
     try {
       setError('');
       await deleteUser(user.id);
-      setSuccess(`Utilizatorul "${user.username}" a fost șters. 🗑️`);
+      setSuccess(`Utilizatorul "${user.username}" a fost șters.`);
       setUsers((prev) => prev.filter((u) => u.id !== user.id));
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
@@ -132,7 +132,7 @@ const AdminPage = () => {
                         onClick={() => handleDeleteUser(user)}
                         title="Șterge utilizator"
                       >
-                        🗑️ Șterge
+                        Șterge
                       </button>
                     </td>
                   </tr>
