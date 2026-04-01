@@ -3,7 +3,14 @@ import { defineConfig, loadEnv } from 'vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const gatewayUrl = env.VITE_GATEWAY_API || env.VITE_GATEWAY_URL || 'http://gateway:3000'
+
+  // loadEnv reads .env files; process.env holds Docker/OS env vars.
+  // Priority: VITE_GATEWAY_API (local dev) → GATEWAY_PROXY_TARGET (Docker, set in Dockerfile.dev) → fallback
+  const gatewayUrl =
+    env.VITE_GATEWAY_API ||
+    env.VITE_GATEWAY_URL ||
+    process.env.GATEWAY_PROXY_TARGET ||
+    'http://gateway:3000'
 
   return {
     plugins: [react()],
@@ -23,3 +30,5 @@ export default defineConfig(({ mode }) => {
     },
   }
 })
+
+

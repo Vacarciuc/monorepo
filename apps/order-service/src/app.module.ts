@@ -19,6 +19,8 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module'
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      expandVariables: true,
+      envFilePath: ['.env.local', '.env', '.env.development'],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

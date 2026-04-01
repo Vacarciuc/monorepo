@@ -12,10 +12,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
-    const rabbitMQUrl = this.configService.get<string>(
-      'RABBITMQ_URL',
-      'amqp://localhost:5672',
-    )
+    const host = this.configService.get<string>('RABBITMQ_HOST', 'localhost')
+    const port = this.configService.get<string>('RABBITMQ_PORT', '5672')
+    const user = this.configService.get<string>('RABBITMQ_USER', 'guest')
+    const pass = this.configService.get<string>('RABBITMQ_PASS', 'guest')
+    // Prefer an explicitly-set full URL, otherwise build from parts
+    const rabbitMQUrl =
+      this.configService.get<string>('RABBITMQ_URL') ||
+      `amqp://${user}:${pass}@${host}:${port}`
 
     this.connection = amqp.connect([rabbitMQUrl])
 
