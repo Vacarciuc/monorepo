@@ -5,6 +5,7 @@ import { AuthProvider } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
 
 vi.mock('../../api/cart.api', () => ({ getCart: vi.fn().mockResolvedValue({ items: [] }) }));
+vi.mock('../../api/order.api', () => ({ getOrders: vi.fn().mockResolvedValue([]) }));
 vi.mock('../../api/auth.api');
 
 const renderNavbar = () =>
@@ -23,36 +24,36 @@ describe('Navbar', () => {
 
   it('afișează linkuri corecte în funcție de rol', () => {
     // ─── NEAUTENTIFICAT ───────────────────────────────────────────────
-    const { unmount: unmount1 } = renderNavbar();
-    expect(screen.queryByText(/deconectare/i)).not.toBeInTheDocument();
-    unmount1();
+    const { unmount: u1 } = renderNavbar();
+    // Nu există niciun link de navigare sau avatar
+    expect(screen.queryByTitle(/coșul meu/i)).not.toBeInTheDocument();
+    u1();
 
-    // ─── CUSTOMER ────────────────────────────────────────────────────
+    // ─── CUSTOMER ─────────────────────────────────────────────────────
     localStorage.setItem('auth_token', 'tok');
     localStorage.setItem('user_role', 'CUSTOMER');
-    const { unmount: unmount2 } = renderNavbar();
-    expect(screen.getByRole('link', { name: /coș/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /comenzile mele/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /produsele mele/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /utilizatori/i })).not.toBeInTheDocument();
-    unmount2();
+    const { unmount: u2 } = renderNavbar();
+    expect(screen.getByTitle(/coșul meu/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/comenzile mele/i)).toBeInTheDocument();
+    expect(screen.queryByTitle(/produsele mele/i)).not.toBeInTheDocument();
+    expect(screen.queryByTitle(/administrare utilizatori/i)).not.toBeInTheDocument();
+    u2();
     localStorage.clear();
 
-    // ─── SELLER ──────────────────────────────────────────────────────
+    // ─── SELLER ───────────────────────────────────────────────────────
     localStorage.setItem('auth_token', 'tok');
     localStorage.setItem('user_role', 'SELLER');
-    const { unmount: unmount3 } = renderNavbar();
-    expect(screen.getByRole('link', { name: /produsele mele/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /utilizatori/i })).not.toBeInTheDocument();
-    unmount3();
+    const { unmount: u3 } = renderNavbar();
+    expect(screen.getByTitle(/produsele mele/i)).toBeInTheDocument();
+    expect(screen.queryByTitle(/administrare utilizatori/i)).not.toBeInTheDocument();
+    u3();
     localStorage.clear();
 
-    // ─── ADMIN ───────────────────────────────────────────────────────
+    // ─── ADMIN ────────────────────────────────────────────────────────
     localStorage.setItem('auth_token', 'tok');
     localStorage.setItem('user_role', 'ADMIN');
     renderNavbar();
-    // Admin vede linkul /admin (Utilizatori) și linkul /seller (Produse)
-    expect(screen.getByRole('link', { name: /utilizatori/i })).toBeInTheDocument();
+    expect(screen.getByTitle(/administrare utilizatori/i)).toBeInTheDocument();
     expect(document.querySelector('a[href="/seller"]')).not.toBeNull();
   });
 });

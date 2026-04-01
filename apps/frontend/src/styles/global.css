@@ -130,14 +130,7 @@ body {
 }
 
 .navbar-button {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: var(--white);
-  border: 1px solid var(--white);
-  padding: 0.5rem 1.25rem;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  display: none; /* înlocuit de avatarul cu dropdown */
 }
 
 .navbar-button:hover {
@@ -1693,3 +1686,325 @@ body {
 .role-pending  { background: #fef3c7; color: #92400e; }
 .role-confirmed { background: #d1fae5; color: #065f46; }
 .role-rejected  { background: #fee2e2; color: #991b1b; }
+
+/* ====================================
+   CSS Variables — Avatar colors
+   ==================================== */
+:root {
+  --avatar-user:   linear-gradient(135deg, #3b82f6, #1d4ed8);
+  --avatar-seller: linear-gradient(135deg, #10b981, #047857);
+  --avatar-admin:  linear-gradient(135deg, #f59e0b, #b45309);
+}
+
+/* ====================================
+   Navbar — icon-only links & avatar
+   ==================================== */
+.navbar-icon-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  text-decoration: none;
+  background: rgba(255,255,255,0.12);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  cursor: pointer;
+}
+.navbar-icon-link:hover {
+  background: rgba(255,255,255,0.28);
+  transform: scale(1.08);
+}
+.navbar-cart-link { position: relative; }
+
+/* Badge pentru comenzi noi (punct roșu) */
+.orders-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid var(--primary-green);
+  pointer-events: none;
+}
+
+/* Avatar cerculeț */
+.navbar-avatar-wrapper {
+  position: relative;
+}
+.navbar-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.7);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  letter-spacing: 0;
+}
+.navbar-avatar:hover {
+  border-color: #fff;
+  transform: scale(1.08);
+}
+
+/* Dropdown cont */
+.navbar-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 200px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease;
+}
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.navbar-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  background: #f9fafb;
+}
+.navbar-dropdown-avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.navbar-dropdown-name {
+  font-weight: 700;
+  color: #111;
+  font-size: 0.92rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+.navbar-dropdown-role {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin: 0;
+}
+.navbar-dropdown-divider {
+  height: 1px;
+  background: #e5e7eb;
+}
+.navbar-dropdown-logout {
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #dc2626;
+  transition: background var(--transition-fast);
+}
+.navbar-dropdown-logout:hover {
+  background: #fef2f2;
+}
+
+/* ====================================
+   Delete button — redesign (svg trash)
+   ==================================== */
+.delete-button {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.6rem 1rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(239,68,68,0.35);
+}
+.delete-button::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6'/%3E%3Cpath d='M10 11v6M14 11v6'/%3E%3Cpath d='M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2'/%3E%3C/svg%3E") center/contain no-repeat;
+  flex-shrink: 0;
+}
+.delete-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(239,68,68,0.45);
+}
+
+/* ====================================
+   Order Notifications (CartPage)
+   ==================================== */
+.order-notifications {
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.order-notifications-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+.order-notification {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border-left: 4px solid transparent;
+  font-size: 0.9rem;
+  animation: slideIn 0.25s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.order-notification--confirmed {
+  background: #d1fae5;
+  border-left-color: #10b981;
+  color: #065f46;
+}
+.order-notification--rejected {
+  background: #fee2e2;
+  border-left-color: #ef4444;
+  color: #7f1d1d;
+}
+.order-notification-icon { font-size: 1.1rem; flex-shrink: 0; }
+.order-notification > span:nth-child(2) { flex: 1; }
+.order-notification-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.5;
+  padding: 0 4px;
+  line-height: 1;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+.order-notification-close:hover { opacity: 1; }
+
+/* ====================================
+   Modal (SellerPage order detail)
+   ==================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+  animation: fadeOverlay 0.2s ease;
+}
+@keyframes fadeOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.modal-content {
+  background: var(--card-bg, #fff);
+  border-radius: var(--radius-xl, 1.2rem);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.22s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+.modal-close {
+  background: #f3f4f6;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+.modal-close:hover { background: #e5e7eb; }
+.modal-body {
+  padding: 1.25rem 1.5rem;
+}
+.modal-meta {
+  font-size: 0.9rem;
+  color: #374151;
+  margin: 0 0 0.5rem;
+}
+.modal-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 1rem 0 0.5rem;
+}
+.modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 1.25rem;
+  border-top: 1px solid #e5e7eb;
+  justify-content: flex-end;
+}
+
+/* Seller order card hover */
+.order-card--seller:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 4px 16px rgba(45,143,95,0.15);
+}
+.order-card--pending { border-left: 3px solid #f59e0b; }
+.order-card--confirmed { border-left: 3px solid #10b981; }
+.order-card--rejected { border-left: 3px solid #ef4444; }
+.seller-order-action-hint {
+  font-size: 0.75rem;
+  opacity: 0.55;
+  font-style: italic;
+}
+
+

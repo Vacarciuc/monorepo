@@ -13,6 +13,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isSeller: boolean;
+  username: string | null;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
@@ -26,13 +27,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
   const [isAdmin, setIsAdmin] = useState(() => authService.isAdmin());
   const [isSeller, setIsSeller] = useState(() => authService.isSeller());
+  const [username, setUsername] = useState<string | null>(() => authService.getUsername());
 
-  // Re-sync state if cookies change (e.g. expiry, manual removal)
   useEffect(() => {
     const sync = () => {
       setIsAuthenticated(authService.isAuthenticated());
       setIsAdmin(authService.isAdmin());
       setIsSeller(authService.isSeller());
+      setUsername(authService.getUsername());
     };
     window.addEventListener('focus', sync);
     return () => window.removeEventListener('focus', sync);
@@ -43,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(true);
     setIsAdmin(authService.isAdmin());
     setIsSeller(authService.isSeller());
+    setUsername(authService.getUsername());
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
@@ -54,11 +57,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     setIsAdmin(false);
     setIsSeller(false);
+    setUsername(null);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, isAdmin, isSeller, login, register, logout }}
+      value={{ isAuthenticated, isAdmin, isSeller, username, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>

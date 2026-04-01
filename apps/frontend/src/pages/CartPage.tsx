@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getImageUrl } from '../api/product.api';
 import { getCart, updateCartItem, removeCartItem, clearCart, checkout } from '../api/cart.api';
+import { getOrders } from '../api/order.api';
 import type { Cart, CartItem } from '../types/cart';
+import type { Order } from '../types/order';
 
 const VAT_RATE = 0.19;         // 19 %
 const SHIPPING_THRESHOLD = 100; // free shipping above this
@@ -14,6 +16,7 @@ const CartPage = () => {
   const [orderLoading, setOrderLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [orderNotifications, setOrderNotifications] = useState<Order[]>([]);
   const navigate = useNavigate();
 
   const defaultImage =
@@ -32,6 +35,18 @@ const CartPage = () => {
   }, [navigate]);
 
   useEffect(() => { loadCart(); }, [loadCart]);
+
+  // Încarcă comenzile procesate pentru notificări
+  useEffect(() => {
+    getOrders()
+      .then((orders) => {
+        const processed = orders.filter((o) =>
+          o.status === 'confirmed' || o.status === 'rejected'
+        );
+        setOrderNotifications(processed);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleQuantityChange = async (item: CartItem, newQty: number) => {
     try {
@@ -91,6 +106,36 @@ const CartPage = () => {
     <div className="page-container">
       <div className="cart-container">
         <h1 className="cart-title">🛒 Coșul Meu</h1>
+
+        {/* Notificări status comenzi procesate */}
+        {orderNotifications.length > 0 && (
+          <div className="order-notifications">
+            <h3 className="order-notifications-title">🔔 Actualizări comenzi</h3>
+            {orderNotifications.map((order) => (
+              <div
+                key={order.id}
+                className={`order-notification order-notification--${order.status}`}
+              >
+                <span className="order-notification-icon">
+                  {order.status === 'confirmed' ? '✅' : '❌'}
+                </span>
+                <span>
+                  Comanda <strong>#{order.id.slice(0, 8)}</strong> a fost{' '}
+                  <strong>{order.status === 'confirmed' ? 'confirmată' : 'respinsă'}</strong>
+                  {' '}de vânzător.
+                </span>
+                <button
+                  className="order-notification-close"
+                  onClick={() =>
+                    setOrderNotifications((prev) => prev.filter((o) => o.id !== order.id))
+                  }
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {success && <div className="success-message">{success}</div>}
         {error   && <div className="error-message">{error}</div>}

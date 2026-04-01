@@ -28,6 +28,8 @@ const SellerPage = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+  // Modal comenzi
+  const [selectedOrder, setSelectedOrder] = useState<SellerOrder | null>(null);
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const { isSeller } = useAuth();
 
@@ -62,7 +64,7 @@ const SellerPage = () => {
     try {
       setError('');
       await deleteProduct(productId);
-      setSuccessMessage('Produsul a fost șters cu succes! 🗑️');
+      setSuccessMessage('Produsul a fost șters cu succes!');
       await fetchProducts();
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: any) {
@@ -94,7 +96,8 @@ const SellerPage = () => {
     try {
       setError('');
       await confirmSellerOrder(order.id);
-      setSuccessMessage(`Comanda #${order.orderId.slice(0, 8)} a fost confirmată! ✅`);
+      setSuccessMessage(`✅ Comanda #${order.orderId.slice(0, 8)} a fost confirmată!`);
+      setSelectedOrder(null);
       await fetchOrders();
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err: any) {
@@ -111,6 +114,7 @@ const SellerPage = () => {
       setError('');
       await rejectSellerOrder(order.id);
       setSuccessMessage(`Comanda #${order.orderId.slice(0, 8)} a fost respinsă.`);
+      setSelectedOrder(null);
       await fetchOrders();
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err: any) {
@@ -121,7 +125,12 @@ const SellerPage = () => {
   };
 
   const formatDate = (d: string | null) =>
-    d ? new Date(d).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+    d ? new Date(d).toLocaleDateString('ro-RO', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    }) : '—';
+
+  const pendingCount = orders.filter((o) => o.status === 'PENDING').length;
 
   return (
     <div className="page-container">
@@ -148,6 +157,9 @@ const SellerPage = () => {
             onClick={() => setActiveTab('comenzi')}
           >
             📋 Comenzi
+            {pendingCount > 0 && (
+              <span className="cart-badge" style={{ marginLeft: 6 }}>{pendingCount}</span>
+            )}
           </button>
         </div>
 
@@ -200,69 +212,113 @@ const SellerPage = () => {
             ) : orders.length === 0 ? (
               <div className="empty-state"><p>Nu există comenzi încă.</p></div>
             ) : (
-              <div className="users-table-wrapper">
-                <table className="users-table">
-                  <thead>
-                    <tr>
-                      <th>Comandă</th>
-                      <th>Produse</th>
-                      <th>Status</th>
-                      <th>Primit la</th>
-                      <th>Procesat la</th>
-                      <th>Acțiuni</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((order) => (
-                      <tr key={order.id} className="users-table-row">
-                        <td className="users-td-id">#{order.orderId.slice(0, 8)}</td>
-                        <td>
-                          {order.orderItems.map((item, i) => (
-                            <div key={i} style={{ fontSize: '0.85rem' }}>
-                              {item.quantity}× <span style={{ opacity: 0.7 }}>{item.productId.slice(0, 8)}</span> — {(item.price * item.quantity).toFixed(2)} RON
-                            </div>
-                          ))}
-                        </td>
-                        <td>
-                          <span className={`role-select role-${order.status.toLowerCase()}`} style={{ padding: '4px 10px', borderRadius: '999px', fontSize: '0.8rem' }}>
-                            {STATUS_LABELS[order.status]}
-                          </span>
-                        </td>
-                        <td style={{ fontSize: '0.85rem' }}>{formatDate(order.createdAt)}</td>
-                        <td style={{ fontSize: '0.85rem' }}>{formatDate(order.processedAt)}</td>
-                        <td>
-                          {order.status === 'PENDING' && (
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <button
-                                className="add-product-button"
-                                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                                disabled={processingOrder === order.id}
-                                onClick={() => handleConfirmOrder(order)}
-                              >
-                                ✅ Confirmă
-                              </button>
-                              <button
-                                className="delete-button"
-                                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                                disabled={processingOrder === order.id}
-                                onClick={() => handleRejectOrder(order)}
-                              >
-                                ❌ Respinge
-                              </button>
-                            </div>
-                          )}
-                          {order.status !== 'PENDING' && <span style={{ opacity: 0.5 }}>—</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <p className="users-count">Total: {orders.length} comandă/comenzi</p>
+              <div className="orders-list">
+                {orders.map((order) => (
+                  <div
+                    key={order.id}
+                    className={`order-card order-card--seller order-card--${order.status.toLowerCase()}`}
+                    onClick={() => order.status === 'PENDING' && setSelectedOrder(order)}
+                    style={{ cursor: order.status === 'PENDING' ? 'pointer' : 'default' }}
+                  >
+                    <div className="order-card-header">
+                      <div className="order-card-left">
+                        <span className="order-id">#{order.orderId.slice(0, 8)}</span>
+                        <span className="order-date">{formatDate(order.createdAt)}</span>
+                      </div>
+                      <div className="order-card-right">
+                        <span className={`order-status status-${order.status.toLowerCase()}`}>
+                          {STATUS_LABELS[order.status]}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+                          {order.orderItems.length} produs{order.orderItems.length !== 1 ? 'e' : ''}
+                        </span>
+                        {order.status === 'PENDING' && (
+                          <span className="seller-order-action-hint">👆 Click pentru acțiuni</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* Modal detalii comandă + acțiuni */}
+      {selectedOrder && (
+        <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">📋 Comandă #{selectedOrder.orderId.slice(0, 8)}</h2>
+              <button className="modal-close" onClick={() => setSelectedOrder(null)}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              <p className="modal-meta">
+                <strong>Primit la:</strong> {formatDate(selectedOrder.createdAt)}
+              </p>
+              <p className="modal-meta">
+                <strong>Status:</strong>{' '}
+                <span className={`order-status status-${selectedOrder.status.toLowerCase()}`}>
+                  {STATUS_LABELS[selectedOrder.status]}
+                </span>
+              </p>
+
+              <h3 className="modal-section-title">Produse comandate</h3>
+              <table className="order-items-table">
+                <thead>
+                  <tr>
+                    <th>Produs ID</th>
+                    <th>Cantitate</th>
+                    <th>Preț</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedOrder.orderItems.map((item, i) => (
+                    <tr key={i}>
+                      <td style={{ fontSize: '0.8rem', opacity: 0.7 }}>{item.productId.slice(0, 12)}…</td>
+                      <td>{item.quantity}</td>
+                      <td>{item.price.toFixed(2)} RON</td>
+                      <td>{(item.price * item.quantity).toFixed(2)} RON</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={3}><strong>Total</strong></td>
+                    <td>
+                      <strong>
+                        {selectedOrder.orderItems.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)} RON
+                      </strong>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {selectedOrder.status === 'PENDING' && (
+              <div className="modal-footer">
+                <button
+                  className="add-product-button"
+                  disabled={processingOrder === selectedOrder.id}
+                  onClick={() => handleConfirmOrder(selectedOrder)}
+                >
+                  ✅ Confirmă Comanda
+                </button>
+                <button
+                  className="delete-button"
+                  disabled={processingOrder === selectedOrder.id}
+                  onClick={() => handleRejectOrder(selectedOrder)}
+                >
+                  ❌ Respinge Comanda
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

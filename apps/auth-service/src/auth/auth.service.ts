@@ -58,6 +58,7 @@ export class AuthService {
       sub: user.id.toString(),
       email: user.email,
       role: user.role,
+      username: user.username,
     }
     return this.jwtService.signAsync(payload, this.signOptions)
   }

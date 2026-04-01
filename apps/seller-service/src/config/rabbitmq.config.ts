@@ -4,7 +4,7 @@ export interface RabbitMQConfig {
   queue: string;
   /** Routing key pentru consumare mesaje de la order-service (e.g. order.created.*) */
   consumerRoutingKey: string;
-  /** Routing key pentru publicare confirmare înapoi la order-service (e.g. order.processed) */
+  /** Routing key pentru publicare confirmare napoi la order-service (e.g. order.processed) */
   producerRoutingKey: string;
 }
 
@@ -13,9 +13,15 @@ const url = `amqp://${process.env.RABBITMQ_USER}:${process.env.RABBITMQ_PASSWORD
 export const getRabbitMQConfig = (): RabbitMQConfig => ({
   url,
   exchange: process.env.RABBITMQ_EXCHANGE ?? 'order.exchange',
-  queue: process.env.RABBITMQ_QUEUE ?? 'seller.queue',
-  consumerRoutingKey: process.env.RABBITMQ_CONSUMER_ROUTING_KEY ?? 'order.created.*',
-  producerRoutingKey: process.env.RABBITMQ_PRODUCER_ROUTING_KEY ?? 'order.processed',
+  // Suportă atât RABBITMQ_CONSUMER_QUEUE (compose.dev.ion.yml) cât și RABBITMQ_QUEUE (legacy)
+  queue:
+    process.env.RABBITMQ_CONSUMER_QUEUE ??
+    process.env.RABBITMQ_QUEUE ??
+    'seller.queue',
+  consumerRoutingKey:
+    process.env.RABBITMQ_CONSUMER_ROUTING_KEY ?? 'order.created.*',
+  producerRoutingKey:
+    process.env.RABBITMQ_PRODUCER_ROUTING_KEY ?? 'order.processed',
 });
 
 
