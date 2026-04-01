@@ -280,8 +280,8 @@ const SellerPage = () => {
                     <tr key={i}>
                       <td style={{ fontSize: '0.8rem', opacity: 0.7 }}>{item.productId.slice(0, 12)}…</td>
                       <td>{item.quantity}</td>
-                      <td>{item.price.toFixed(2)} RON</td>
-                      <td>{(item.price * item.quantity).toFixed(2)} RON</td>
+                      <td>{item.price.toFixed(2)} MDL</td>
+                      <td>{(item.price * item.quantity).toFixed(2)} MDL</td>
                     </tr>
                   ))}
                 </tbody>
@@ -290,7 +290,7 @@ const SellerPage = () => {
                     <td colSpan={3}><strong>Total</strong></td>
                     <td>
                       <strong>
-                        {selectedOrder.orderItems.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)} RON
+                        {selectedOrder.orderItems.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)} MDL
                       </strong>
                     </td>
                   </tr>

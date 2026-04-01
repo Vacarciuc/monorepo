@@ -163,7 +163,7 @@ const CartPage = () => {
                   />
                   <div className="cart-item-details">
                     <p className="cart-item-name">{item.name}</p>
-                    <p className="cart-item-unit-price">{item.price.toFixed(2)} RON / buc</p>
+                    <p className="cart-item-unit-price">{item.price.toFixed(2)} MDL / buc</p>
                   </div>
                   <div className="cart-item-qty">
                     <button className="qty-btn" onClick={() => handleQuantityChange(item, item.quantity - 1)}>−</button>
@@ -171,7 +171,7 @@ const CartPage = () => {
                     <button className="qty-btn" onClick={() => handleQuantityChange(item, item.quantity + 1)}>+</button>
                   </div>
                   <p className="cart-item-subtotal">
-                    {(item.price * item.quantity).toFixed(2)} RON
+                    {(item.price * item.quantity).toFixed(2)} MDL
                   </p>
                   <button className="cart-remove-btn" title="Elimină" onClick={() => handleRemove(item.productId)}>✕</button>
                 </div>
@@ -188,29 +188,29 @@ const CartPage = () => {
 
               <div className="cart-summary-row">
                 <span>Subtotal</span>
-                <span>{subtotal.toFixed(2)} RON</span>
+                <span>{subtotal.toFixed(2)} MDL</span>
               </div>
               <div className="cart-summary-row">
                 <span>TVA (19%)</span>
-                <span>{vat.toFixed(2)} RON</span>
+                <span>{vat.toFixed(2)} MDL</span>
               </div>
               <div className="cart-summary-row">
                 <span>Transport</span>
                 <span>
                   {shipping === 0
                     ? <span className="free-shipping">GRATUIT</span>
-                    : `${shipping.toFixed(2)} RON`}
+                    : `${shipping.toFixed(2)} MDL`}
                 </span>
               </div>
               {shipping > 0 && (
                 <p className="shipping-hint">
-                  Adaugă încă {(SHIPPING_THRESHOLD - subtotal).toFixed(2)} RON pentru transport gratuit
+                  Adaugă încă {(SHIPPING_THRESHOLD - subtotal).toFixed(2)} MDL pentru transport gratuit
                 </p>
               )}
               <div className="cart-summary-divider" />
               <div className="cart-summary-total">
                 <span>Total</span>
-                <span>{total.toFixed(2)} RON</span>
+                <span>{total.toFixed(2)} MDL</span>
               </div>
 
               <button

@@ -42,7 +42,7 @@ const QuantityModal = ({ product, onConfirm, onClose }: QuantityModalProps) => {
           />
           <div className="qty-modal-info">
             <h3 className="qty-modal-name">{product.name}</h3>
-            <p className="qty-modal-price">{Number(product.price).toFixed(2)} RON / buc</p>
+            <p className="qty-modal-price">{Number(product.price).toFixed(2)} MDL / buc</p>
             <p className="qty-modal-stock">📦 {max} în stoc</p>
           </div>
         </div>
@@ -81,7 +81,7 @@ const QuantityModal = ({ product, onConfirm, onClose }: QuantityModalProps) => {
         </div>
 
         <p className="qty-subtotal">
-          Subtotal: <strong>{(Number(product.price) * quantity).toFixed(2)} RON</strong>
+          Subtotal: <strong>{(Number(product.price) * quantity).toFixed(2)} MDL</strong>
         </p>
 
         {/* Actions */}
