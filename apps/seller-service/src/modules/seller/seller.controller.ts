@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Param,
-  ParseUUIDPipe,
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
@@ -12,11 +11,17 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiBadRequestResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { SellerService } from './seller.service';
-import { SellerOrder } from '../../database/entities/seller-order.entity';
+import { SellerService, OrderActionResult } from './seller.service';
+
+export interface PendingOrderDto {
+  orderId: string;
+  sellerId: string;
+  items: { productId: string; quantity: number; price: number }[];
+  totalPrice: number;
+  receivedAt: string;
+}
 
 @ApiTags('seller-orders')
 @Controller('seller/orders')
@@ -25,121 +30,81 @@ export class SellerController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get all orders',
+    summary: 'Comenzi pendinte din coadă (fără DB)',
     description:
-      'Retrieves all orders processed by the seller service, sorted by creation date (newest first).',
+      'Returnează comenzile aflate în memorie (neACK-ate). ' +
+      'Mesajele rămân în broker până la confirmare/respingere.',
   })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'List of all orders retrieved successfully',
-    type: [SellerOrder],
-  })
-  async getAllOrders(): Promise<SellerOrder[]> {
-    return this.sellerService.findAllOrders();
+  @ApiResponse({ status: HttpStatus.OK, description: 'Listă comenzi pendinte' })
+  getPendingOrders(): PendingOrderDto[] {
+    return this.sellerService.getPendingOrders().map((p) => ({
+      orderId: p.event.orderId,
+      sellerId: p.event.sellerId,
+      items: p.event.items,
+      totalPrice: p.event.totalPrice,
+      receivedAt: p.receivedAt.toISOString(),
+    }));
   }
 
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get order by ID',
-    description: 'Retrieves a specific order by its unique identifier.',
-  })
-  @ApiParam({
-    name: 'id',
-    type: 'string',
-    format: 'uuid',
-    description: 'Order UUID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Order found and retrieved successfully',
-    type: SellerOrder,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid UUID format',
-    schema: {
-      example: {
-        statusCode: 400,
-        message: 'Validation failed (uuid is expected)',
-        error: 'Bad Request',
-      },
-    },
-  })
-  @ApiNotFoundResponse({
-    description: 'Order not found',
-    schema: {
-      example: {
-        statusCode: 404,
-        message: 'Order with id 550e8400-e29b-41d4-a716-446655440000 not found',
-        error: 'Not Found',
-      },
-    },
-  })
-  async getOrderById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<SellerOrder> {
-    return this.sellerService.findOrderById(id);
+  @Get(':orderId')
+  @ApiOperation({ summary: 'Comandă pendintă după ID' })
+  @ApiParam({ name: 'orderId', type: 'string', format: 'uuid' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Comandă pendintă' })
+  @ApiNotFoundResponse({ description: 'orderId nu se află în coada pendinte' })
+  getOrderById(@Param('orderId') orderId: string): PendingOrderDto {
+    const p = this.sellerService.getOrderById(orderId);
+    return {
+      orderId: p.event.orderId,
+      sellerId: p.event.sellerId,
+      items: p.event.items,
+      totalPrice: p.event.totalPrice,
+      receivedAt: p.receivedAt.toISOString(),
+    };
   }
 
-  @Post(':id/confirm')
+  @Post(':orderId/confirm')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Manually confirm an order',
+    summary: 'Confirmă comanda (ACK + publică CONFIRMED)',
     description:
-      'Manually confirms a pending order, updates status to CONFIRMED, and sends ACK to RabbitMQ (message will be deleted from queue).',
+      'Scade stocul, ACK-ează mesajul din coadă și publică order.processed cu CONFIRMED.',
   })
   @ApiParam({
-    name: 'id',
+    name: 'orderId',
     type: 'string',
     format: 'uuid',
-    description: 'Order UUID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'orderId din order-service',
   })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Order confirmed successfully',
-    type: SellerOrder,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid UUID format',
-  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Comanda confirmată' })
   @ApiNotFoundResponse({
-    description: 'Order not found',
+    description: 'orderId nu se află în coada pendinte',
   })
   async confirmOrder(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<SellerOrder> {
-    return this.sellerService.confirmOrder(id);
+    @Param('orderId') orderId: string,
+  ): Promise<OrderActionResult> {
+    return this.sellerService.confirmOrder(orderId);
   }
 
-  @Post(':id/reject')
+  @Post(':orderId/reject')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Manually reject an order',
+    summary: 'Respinge comanda (NACK + publică REJECTED)',
     description:
-      'Manually rejects a pending order, updates status to REJECTED, and sends NACK to RabbitMQ (message will be deleted from queue without requeue).',
+      'NACK-ează mesajul (eliminat din coadă) și publică order.processed cu REJECTED.',
   })
   @ApiParam({
-    name: 'id',
+    name: 'orderId',
     type: 'string',
     format: 'uuid',
-    description: 'Order UUID',
-    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'orderId din order-service',
   })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Order rejected successfully',
-    type: SellerOrder,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid UUID format',
-  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Comanda respinsă' })
   @ApiNotFoundResponse({
-    description: 'Order not found',
+    description: 'orderId nu se află în coada pendinte',
   })
   async rejectOrder(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<SellerOrder> {
-    return this.sellerService.rejectOrder(id);
+    @Param('orderId') orderId: string,
+  ): Promise<OrderActionResult> {
+    return this.sellerService.rejectOrder(orderId);
   }
 }

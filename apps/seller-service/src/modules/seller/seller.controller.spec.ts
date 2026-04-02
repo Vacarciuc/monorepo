@@ -1,18 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SellerController } from './seller.controller';
-import { SellerService } from './seller.service';
-import {
-  SellerOrder,
-  OrderStatus,
-} from '../../database/entities/seller-order.entity';
+import { SellerController, PendingOrderDto } from './seller.controller';
+import { SellerService, OrderActionResult } from './seller.service';
+import { OrderCreatedEvent, OrderItem } from '../../dto/order-created.event';
+import { PendingOrder } from '../../messaging/rabbitmq.consumer';
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+const makeEvent = (): OrderCreatedEvent => ({
+  orderId: '123e4567-e89b-12d3-a456-426614174000',
+  sellerId: '223e4567-e89b-12d3-a456-426614174001',
+  totalPrice: 100,
+  items: [{ productId: 'prod-1', quantity: 2, price: 50 }] as OrderItem[],
+});
+
+const makePendingOrder = (): PendingOrder => ({
+  event: makeEvent(),
+  receivedAt: new Date('2026-01-01T00:00:00.000Z'),
+});
+
+// ─── suite ───────────────────────────────────────────────────────────────────
 
 describe('SellerController', () => {
   let controller: SellerController;
-  let service: SellerService;
+  let service: jest.Mocked<SellerService>;
 
   const mockSellerService = {
-    findAllOrders: jest.fn(),
-    findOrderById: jest.fn(),
+    getPendingOrders: jest.fn(),
+    getOrderById: jest.fn(),
     confirmOrder: jest.fn(),
     rejectOrder: jest.fn(),
   };
@@ -20,111 +34,87 @@ describe('SellerController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SellerController],
-      providers: [
-        {
-          provide: SellerService,
-          useValue: mockSellerService,
-        },
-      ],
+      providers: [{ provide: SellerService, useValue: mockSellerService }],
     }).compile();
 
     controller = module.get<SellerController>(SellerController);
-    service = module.get<SellerService>(SellerService);
-  });
-
-  afterEach(() => {
+    service = module.get(SellerService);
     jest.clearAllMocks();
   });
 
-  describe('getAllOrders', () => {
-    it('should return an array of orders', async () => {
-      const mockOrders: SellerOrder[] = [
-        {
-          id: '1',
-          orderId: 'order-1',
-          status: OrderStatus.CONFIRMED,
-          orderItems: [],
-          processedAt: new Date(),
-          createdAt: new Date(),
-        },
-        {
-          id: '2',
-          orderId: 'order-2',
-          status: OrderStatus.PENDING,
-          orderItems: [],
-          processedAt: null as unknown as Date,
-          createdAt: new Date(),
-        },
-      ];
+  // ── getPendingOrders ──────────────────────────────────────────────────────
 
-      mockSellerService.findAllOrders.mockResolvedValue(mockOrders);
+  describe('getPendingOrders', () => {
+    it('maps PendingOrder[] to flat PendingOrderDto[]', () => {
+      const pending = makePendingOrder();
+      mockSellerService.getPendingOrders.mockReturnValue([pending]);
 
-      const result = await controller.getAllOrders();
+      const result = controller.getPendingOrders();
 
-      expect(service.findAllOrders).toHaveBeenCalled();
-      expect(result).toEqual(mockOrders);
+      expect(service.getPendingOrders).toHaveBeenCalledTimes(1);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual<PendingOrderDto>({
+        orderId: pending.event.orderId,
+        sellerId: pending.event.sellerId,
+        items: pending.event.items,
+        totalPrice: pending.event.totalPrice,
+        receivedAt: pending.receivedAt.toISOString(),
+      });
+    });
+
+    it('returns empty array when queue is empty', () => {
+      mockSellerService.getPendingOrders.mockReturnValue([]);
+      expect(controller.getPendingOrders()).toEqual([]);
     });
   });
+
+  // ── getOrderById ──────────────────────────────────────────────────────────
 
   describe('getOrderById', () => {
-    it('should return a specific order', async () => {
-      const mockOrder: SellerOrder = {
-        id: '123e4567-e89b-12d3-a456-426614174000',
-        orderId: 'order-1',
-        status: OrderStatus.CONFIRMED,
-        orderItems: [],
-        processedAt: new Date(),
-        createdAt: new Date(),
-      };
+    it('maps a single PendingOrder to PendingOrderDto', () => {
+      const pending = makePendingOrder();
+      mockSellerService.getOrderById.mockReturnValue(pending);
 
-      mockSellerService.findOrderById.mockResolvedValue(mockOrder);
+      const result = controller.getOrderById(pending.event.orderId);
 
-      const result = await controller.getOrderById(mockOrder.id);
-
-      expect(service.findOrderById).toHaveBeenCalledWith(mockOrder.id);
-      expect(result).toEqual(mockOrder);
+      expect(service.getOrderById).toHaveBeenCalledWith(pending.event.orderId);
+      expect(result).toEqual<PendingOrderDto>({
+        orderId: pending.event.orderId,
+        sellerId: pending.event.sellerId,
+        items: pending.event.items,
+        totalPrice: pending.event.totalPrice,
+        receivedAt: pending.receivedAt.toISOString(),
+      });
     });
   });
 
-  describe('confirmOrder', () => {
-    it('should confirm an order', async () => {
-      const orderId = '123e4567-e89b-12d3-a456-426614174000';
-      const mockOrder: SellerOrder = {
-        id: orderId,
-        orderId: 'order-1',
-        status: OrderStatus.CONFIRMED,
-        orderItems: [],
-        processedAt: new Date(),
-        createdAt: new Date(),
-      };
+  // ── confirmOrder ──────────────────────────────────────────────────────────
 
-      mockSellerService.confirmOrder.mockResolvedValue(mockOrder);
+  describe('confirmOrder', () => {
+    it('delegates to service and returns OrderActionResult', async () => {
+      const orderId = '123e4567-e89b-12d3-a456-426614174000';
+      const mockResult: OrderActionResult = { orderId, status: 'CONFIRMED' };
+      mockSellerService.confirmOrder.mockResolvedValue(mockResult);
 
       const result = await controller.confirmOrder(orderId);
 
       expect(service.confirmOrder).toHaveBeenCalledWith(orderId);
-      expect(result.status).toBe(OrderStatus.CONFIRMED);
+      expect(result).toEqual(mockResult);
     });
   });
 
-  describe('rejectOrder', () => {
-    it('should reject an order', async () => {
-      const orderId = '123e4567-e89b-12d3-a456-426614174000';
-      const mockOrder: SellerOrder = {
-        id: orderId,
-        orderId: 'order-1',
-        status: OrderStatus.REJECTED,
-        orderItems: [],
-        processedAt: new Date(),
-        createdAt: new Date(),
-      };
+  // ── rejectOrder ───────────────────────────────────────────────────────────
 
-      mockSellerService.rejectOrder.mockResolvedValue(mockOrder);
+  describe('rejectOrder', () => {
+    it('delegates to service and returns OrderActionResult', async () => {
+      const orderId = '123e4567-e89b-12d3-a456-426614174000';
+      const mockResult: OrderActionResult = { orderId, status: 'REJECTED' };
+      mockSellerService.rejectOrder.mockResolvedValue(mockResult);
 
       const result = await controller.rejectOrder(orderId);
 
       expect(service.rejectOrder).toHaveBeenCalledWith(orderId);
-      expect(result.status).toBe(OrderStatus.REJECTED);
+      expect(result).toEqual(mockResult);
     });
   });
 });

@@ -23,7 +23,7 @@ export const getCart = (): Promise<Cart> =>
 
 export const addToCart = (productId: string, quantity: number): Promise<Cart> =>
   cartClient
-    .post<Cart>('/order/cart', { productId, quantity }, userParam())
+    .post<Cart>('/order/cart', { product_id: productId, quantity }, userParam())
     .then((r) => r.data)
 
 export const updateCartItem = (productId: string, quantity: number): Promise<Cart> =>

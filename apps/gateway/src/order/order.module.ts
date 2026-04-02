@@ -6,6 +6,7 @@ import qs from 'qs'
 import { AuthModule } from '@/auth/auth.module'
 import { OrderController } from '@/order/order.controller'
 import { OrderService } from '@/order/order.service'
+import { SellerModule } from '@/seller/seller.module'
 import { AppEnv } from '@/types/app-env.types'
 
 @Module({
@@ -19,6 +20,7 @@ import { AppEnv } from '@/types/app-env.types'
       }),
     }),
     AuthModule,
+    SellerModule,
   ],
   providers: [OrderService],
   controllers: [OrderController],

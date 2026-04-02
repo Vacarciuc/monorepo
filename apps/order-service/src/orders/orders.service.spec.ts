@@ -6,6 +6,7 @@ import { DataSource } from 'typeorm'
 import { OrderItem } from '../entities/order-item.entity'
 import { Order, OrderStatus } from '../entities/order.entity'
 import { RabbitMQService } from '../rabbitmq/rabbitmq.service'
+import { SellerClientService } from '../seller/seller-client.service'
 import { OrdersService } from './orders.service'
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -45,6 +46,10 @@ const mockRabbitMQService = {
   publishOrderCreated: jest.fn().mockResolvedValue(undefined),
 }
 
+const mockSellerClientService = {
+  getProduct: jest.fn(),
+}
+
 // ── suite ──────────────────────────────────────────────────────────────────────
 
 describe('OrdersService', () => {
@@ -58,6 +63,7 @@ describe('OrdersService', () => {
         { provide: getRepositoryToken(OrderItem), useValue: mockOrderItemRepository },
         { provide: DataSource, useValue: mockDataSource },
         { provide: RabbitMQService, useValue: mockRabbitMQService },
+        { provide: SellerClientService, useValue: mockSellerClientService },
       ],
     }).compile()
 
@@ -65,7 +71,7 @@ describe('OrdersService', () => {
     jest.clearAllMocks()
   })
 
-  // ── Test 1: findAll returnează comenzile utilizatorului ──────────────────────
+  // ── findAll ──────────────────────────────────────────────────────────────────
 
   describe('findAll', () => {
     it('returnează lista de comenzi pentru userId-ul dat', async () => {
@@ -80,7 +86,7 @@ describe('OrdersService', () => {
 
       expect(mockOrderRepository.find).toHaveBeenCalledWith({
         where: { user_id: userId },
-        relations: ['items', 'items.product'],
+        relations: ['items'],
         order: { created_at: 'DESC' },
       })
       expect(result).toHaveLength(2)
@@ -89,7 +95,7 @@ describe('OrdersService', () => {
     })
   })
 
-  // ── Test 2: findOne aruncă NotFoundException când comanda nu există ───────────
+  // ── findOne ───────────────────────────────────────────────────────────────────
 
   describe('findOne', () => {
     it('aruncă NotFoundException când comanda nu este găsită', async () => {
@@ -101,8 +107,17 @@ describe('OrdersService', () => {
 
       expect(mockOrderRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'non-existent-id', user_id: 'user-uuid-1' },
-        relations: ['items', 'items.product'],
+        relations: ['items'],
       })
+    })
+
+    it('returnează comanda când este găsită', async () => {
+      const order = makeOrder()
+      mockOrderRepository.findOne.mockResolvedValue(order)
+
+      const result = await service.findOne(order.id, order.user_id)
+
+      expect(result).toEqual(order)
     })
   })
 })

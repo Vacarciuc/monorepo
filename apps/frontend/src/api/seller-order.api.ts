@@ -6,15 +6,18 @@ export interface SellerOrderItem {
   price: number
 }
 
-export type SellerOrderStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED'
-
+/** Matches PendingSellerOrderDto — only unacknowledged (pending) orders from RabbitMQ queue */
 export interface SellerOrder {
-  id: string
+  orderId: string       // primary key (UUID from order-service)
+  sellerId: string
+  items: SellerOrderItem[]
+  totalPrice: number
+  receivedAt: string    // ISO timestamp when seller-service received the message
+}
+
+export interface OrderActionResult {
   orderId: string
-  status: SellerOrderStatus
-  orderItems: SellerOrderItem[]
-  processedAt: string | null
-  createdAt: string
+  status: 'CONFIRMED' | 'REJECTED'
 }
 
 export const getSellerOrders = async (): Promise<SellerOrder[]> => {
@@ -22,18 +25,17 @@ export const getSellerOrders = async (): Promise<SellerOrder[]> => {
   return response.data
 }
 
-export const getSellerOrderById = async (id: string): Promise<SellerOrder> => {
-  const response = await apiClient.get<SellerOrder>(`/seller/orders/${id}`)
+export const getSellerOrderById = async (orderId: string): Promise<SellerOrder> => {
+  const response = await apiClient.get<SellerOrder>(`/seller/orders/${orderId}`)
   return response.data
 }
 
-export const confirmSellerOrder = async (id: string): Promise<SellerOrder> => {
-  const response = await apiClient.post<SellerOrder>(`/seller/orders/${id}/confirm`)
+export const confirmSellerOrder = async (orderId: string): Promise<OrderActionResult> => {
+  const response = await apiClient.post<OrderActionResult>(`/seller/orders/${orderId}/confirm`)
   return response.data
 }
 
-export const rejectSellerOrder = async (id: string): Promise<SellerOrder> => {
-  const response = await apiClient.post<SellerOrder>(`/seller/orders/${id}/reject`)
+export const rejectSellerOrder = async (orderId: string): Promise<OrderActionResult> => {
+  const response = await apiClient.post<OrderActionResult>(`/seller/orders/${orderId}/reject`)
   return response.data
 }
-

@@ -4,22 +4,18 @@ import { Repository } from 'typeorm'
 
 import { AddToCartDto, UpdateCartItemDto } from '../dto/cart.dto'
 import { CartItem } from '../entities/cart-item.entity'
-import { ProductsService } from '../products/products.service'
 
 @Injectable()
 export class CartService {
   constructor(
     @InjectRepository(CartItem)
     private cartItemRepository: Repository<CartItem>,
-    private productsService: ProductsService,
   ) {}
 
   async addToCart(
     userId: string,
     addToCartDto: AddToCartDto,
   ): Promise<CartItem> {
-    await this.productsService.findOne(addToCartDto.product_id)
-
     let cartItem = await this.cartItemRepository.findOne({
       where: {
         user_id: userId,
@@ -43,17 +39,16 @@ export class CartService {
   async getCart(userId: string): Promise<CartItem[]> {
     return await this.cartItemRepository.find({
       where: { user_id: userId },
-      relations: ['product'],
     })
   }
 
   async updateCartItem(
     userId: string,
-    cartItemId: string,
+    productId: string,
     updateCartItemDto: UpdateCartItemDto,
   ): Promise<CartItem> {
     const cartItem = await this.cartItemRepository.findOne({
-      where: { id: cartItemId, user_id: userId },
+      where: { product_id: productId, user_id: userId },
     })
 
     if (!cartItem) {
@@ -64,9 +59,9 @@ export class CartService {
     return await this.cartItemRepository.save(cartItem)
   }
 
-  async removeFromCart(userId: string, cartItemId: string): Promise<void> {
+  async removeFromCart(userId: string, productId: string): Promise<void> {
     const cartItem = await this.cartItemRepository.findOne({
-      where: { id: cartItemId, user_id: userId },
+      where: { product_id: productId, user_id: userId },
     })
 
     if (!cartItem) {

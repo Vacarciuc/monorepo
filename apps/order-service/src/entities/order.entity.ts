@@ -28,10 +28,10 @@ export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column('uuid')
+  @Column({ type: 'varchar', length: 50 })
   user_id: string
 
-  @Column('uuid')
+  @Column({ type: 'varchar', length: 50 })
   seller_id: string
 
   // Stored as integer cents in DB to avoid decimal/string issues.

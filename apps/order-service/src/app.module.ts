@@ -8,11 +8,9 @@ import { CartItem } from './entities/cart-item.entity'
 import { OrderItem } from './entities/order-item.entity'
 import { Order } from './entities/order.entity'
 import { OutboxEvent } from './entities/outbox-event.entity'
-import { Product } from './entities/product.entity'
 import { MetricsModule } from './metrics/metrics.module'
 import { TotalRequestsMetricsInterceptor } from './metrics/total-requests-metrics.interceptor'
 import { OrdersModule } from './orders/orders.module'
-import { ProductsModule } from './products/products.module'
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module'
 
 @Module({
@@ -31,12 +29,11 @@ import { RabbitMQModule } from './rabbitmq/rabbitmq.module'
         username: configService.get('ORDER_SERVICE_DB_USER'),
         password: configService.get('ORDER_SERVICE_DB_PASSWORD'),
         database: configService.get('ORDER_SERVICE_DB_NAME'),
-        entities: [Product, CartItem, Order, OrderItem, OutboxEvent],
+        entities: [CartItem, Order, OrderItem, OutboxEvent],
         synchronize: true,
       }),
       inject: [ConfigService],
     }),
-    ProductsModule,
     CartModule,
     OrdersModule,
     RabbitMQModule,

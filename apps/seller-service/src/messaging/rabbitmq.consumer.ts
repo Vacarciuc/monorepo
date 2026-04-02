@@ -3,17 +3,19 @@ import {
   Logger,
   OnModuleInit,
   OnModuleDestroy,
-  forwardRef,
-  Inject,
 } from '@nestjs/common';
 import * as amqp from 'amqp-connection-manager';
 import { ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import { getRabbitMQConfig } from '../config/rabbitmq.config';
-import { SellerService } from '../modules/seller/seller.service';
 import { OrderCreatedEvent } from '../dto/order-created.event';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+
+export interface PendingOrder {
+  event: OrderCreatedEvent;
+  receivedAt: Date;
+}
 
 @Injectable()
 export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
@@ -22,16 +24,18 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
   private channelWrapper: ChannelWrapper;
   private readonly config = getRabbitMQConfig();
 
-  // Mesaje care așteaptă confirmare manuală
-  private pendingMessages = new Map<
-    string,
-    { msg: ConsumeMessage; channel: ConfirmChannel }
-  >();
+  /**
+   * Mesaje așteptând acțiune manuală a vânzătorului.
+   * Cheia = orderId (din payload), valoarea = mesajul brut + canalul + event-ul parsat.
+   * NU se face ACK până când seller-ul nu confirmă/respinge prin endpoint.
+   */
+  private pendingMessages = new Map<string, {
+    msg: ConsumeMessage;
+    channel: ConfirmChannel;
+    order: PendingOrder;
+  }>();
 
-  constructor(
-    @Inject(forwardRef(() => SellerService))
-    private readonly sellerService: SellerService,
-  ) {}
+  constructor() {}
 
   async onModuleInit() {
     await this.connect();
@@ -48,36 +52,23 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
 
       this.channelWrapper = this.connection.createChannel({
         setup: async (channel: ConfirmChannel) => {
-          this.logger.log(`Configurare canal și coadă: ${this.config.queue}`);
-
-          // 1. Assert exchange
-          await channel.assertExchange(this.config.exchange, 'topic', {
-            durable: true,
-          });
-
-          // 2. Assert coadă consumer
+          await channel.assertExchange(this.config.exchange, 'topic', { durable: true });
           await channel.assertQueue(this.config.queue, { durable: true });
+          await channel.bindQueue(this.config.queue, this.config.exchange, this.config.consumerRoutingKey);
 
-          // 3. Bind cu consumerRoutingKey (ex: order.created.*)
-          await channel.bindQueue(
-            this.config.queue,
-            this.config.exchange,
-            this.config.consumerRoutingKey,
-          );
+          // prefetch(1) — nu prelua al doilea mesaj până nu se ACK-ează primul
+          await channel.prefetch(1);
 
-          // 4. Start consuming
           await channel.consume(
             this.config.queue,
             async (msg: ConsumeMessage | null) => {
-              if (msg) {
-                await this.handleMessage(msg, channel);
-              }
+              if (msg) await this.handleMessage(msg, channel);
             },
             { noAck: false },
           );
 
           this.logger.log(
-            `✅ Coada ${this.config.queue} legată cu routing key "${this.config.consumerRoutingKey}" și consumă mesaje.`,
+            `✅ Consumând din "${this.config.queue}" (routing: "${this.config.consumerRoutingKey}") — așteptare acțiune manuală`,
           );
         },
       });
@@ -87,13 +78,10 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async handleMessage(
-    msg: ConsumeMessage,
-    channel: ConfirmChannel,
-  ): Promise<void> {
+  private async handleMessage(msg: ConsumeMessage, channel: ConfirmChannel): Promise<void> {
     try {
       const content = msg.content.toString();
-      this.logger.log(`Mesaj primit: ${content}`);
+      this.logger.log(`📨 Mesaj primit: ${content}`);
 
       const eventData = JSON.parse(content);
       const event = plainToInstance(OrderCreatedEvent, eventData);
@@ -101,43 +89,58 @@ export class RabbitMQConsumer implements OnModuleInit, OnModuleDestroy {
       const errors = await validate(event);
       if (errors.length > 0) {
         this.logger.error('Date eveniment invalide', errors);
-        channel.nack(msg, false, false);
+        channel.nack(msg, false, false); // mesaj malformat → discard
         return;
       }
 
-      // Salvează comanda ca PENDING
-      await this.sellerService.processOrder(event);
+      // Stochează fără ACK — mesajul rămâne "unacknowledged" în broker
+      // până când seller-ul apelează /confirm sau /reject
+      this.pendingMessages.set(event.orderId, {
+        msg,
+        channel,
+        order: { event, receivedAt: new Date() },
+      });
 
-      // Stochează mesajul pentru confirmare ulterioară
-      this.pendingMessages.set(event.orderId, { msg, channel });
       this.logger.log(
-        `Mesaj stocat pentru comanda ${event.orderId}, așteptare confirmare manuală`,
+        `📦 Comanda ${event.orderId} ținută în memorie — așteptare acțiune seller (${this.pendingMessages.size} pending)`,
       );
     } catch (error) {
       this.logger.error('Eroare la procesarea mesajului', error);
-      channel.nack(msg, false, true);
+      channel.nack(msg, false, true); // requeue
     }
   }
 
-  /** ACK mesaj — apelat după confirmare */
-  async acknowledgeOrder(orderId: string): Promise<void> {
+  // ── Metode expuse către SellerService ──────────────────────────────────────
+
+  /** Returnează toate comenzile pendinte din memorie */
+  getPendingOrders(): PendingOrder[] {
+    return Array.from(this.pendingMessages.values()).map((p) => p.order);
+  }
+
+  /** Returnează o singură comandă pendintă după orderId */
+  getPendingOrder(orderId: string): PendingOrder | undefined {
+    return this.pendingMessages.get(orderId)?.order;
+  }
+
+  /** ACK — apelat după confirmare de seller */
+  acknowledgeOrder(orderId: string): void {
     const pending = this.pendingMessages.get(orderId);
     if (pending) {
       pending.channel.ack(pending.msg);
       this.pendingMessages.delete(orderId);
-      this.logger.log(`✅ Mesaj ACK pentru comanda ${orderId}`);
+      this.logger.log(`✅ ACK comanda ${orderId} (${this.pendingMessages.size} pending)`);
     } else {
       this.logger.warn(`Niciun mesaj pending pentru comanda ${orderId}`);
     }
   }
 
-  /** NACK mesaj — apelat după respingere */
-  async rejectOrder(orderId: string): Promise<void> {
+  /** NACK fără requeue — apelat după respingere de seller */
+  rejectOrder(orderId: string): void {
     const pending = this.pendingMessages.get(orderId);
     if (pending) {
       pending.channel.nack(pending.msg, false, false);
       this.pendingMessages.delete(orderId);
-      this.logger.log(`❌ Mesaj NACK pentru comanda ${orderId}`);
+      this.logger.log(`❌ NACK comanda ${orderId} (${this.pendingMessages.size} pending)`);
     } else {
       this.logger.warn(`Niciun mesaj pending pentru comanda ${orderId}`);
     }

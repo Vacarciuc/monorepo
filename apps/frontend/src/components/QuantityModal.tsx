@@ -21,7 +21,8 @@ const QuantityModal = ({ product, onConfirm, onClose }: QuantityModalProps) => {
     try {
       await onConfirm(quantity);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Nu s-a putut adăuga în coș.');
+      const msg = err.response?.data?.message;
+      setError(Array.isArray(msg) ? msg.join(', ') : msg || 'Nu s-a putut adăuga în coș.');
       setLoading(false);
     }
   };

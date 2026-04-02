@@ -4,7 +4,7 @@ import FormData from 'form-data'
 
 import { BaseMicroserviceService } from '@/common/classes/base-microservice-service'
 import { sellerEndpoints } from '@/seller/seller-endpoints.constants'
-import { SellerOrderDto } from '@/seller/dto/seller-order.dto'
+import { PendingSellerOrderDto, OrderActionResultDto } from '@/seller/dto/seller-order.dto'
 import {
   CreateSellerProductDto,
   SellerProductDto,
@@ -19,28 +19,28 @@ export class SellerService extends BaseMicroserviceService {
 
   // ── Orders ────────────────────────────────────────────────────────────────
 
-  getAllOrders(): Promise<SellerOrderDto[]> {
+  getAllOrders(): Promise<PendingSellerOrderDto[]> {
     return this.forwardRequest({
       url: sellerEndpoints.getAllOrders(),
       method: 'GET',
     })
   }
 
-  getOrderById(id: string): Promise<SellerOrderDto> {
+  getOrderById(id: string): Promise<PendingSellerOrderDto> {
     return this.forwardRequest({
       url: sellerEndpoints.getOrderById({ id }),
       method: 'GET',
     })
   }
 
-  confirmOrder(id: string): Promise<SellerOrderDto> {
+  confirmOrder(id: string): Promise<OrderActionResultDto> {
     return this.forwardRequest({
       url: sellerEndpoints.confirmOrder({ id }),
       method: 'POST',
     })
   }
 
-  rejectOrder(id: string): Promise<SellerOrderDto> {
+  rejectOrder(id: string): Promise<OrderActionResultDto> {
     return this.forwardRequest({
       url: sellerEndpoints.rejectOrder({ id }),
       method: 'POST',

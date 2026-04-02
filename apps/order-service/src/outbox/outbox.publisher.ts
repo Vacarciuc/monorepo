@@ -50,6 +50,7 @@ export class OutboxPublisher implements OnModuleInit, OnModuleDestroy {
       case OutboxEventType.ORDER_CREATED: {
         const sellerId = event.payload?.sellerId
         if (typeof sellerId !== 'string' || sellerId.length === 0) return
+        console.log('seller',sellerId)
         await this.rabbitMQService.publishOrderCreated(sellerId, event.payload)
         return
       }

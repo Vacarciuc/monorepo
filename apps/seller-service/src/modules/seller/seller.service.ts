@@ -2,63 +2,81 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  BadRequestException,
-  forwardRef,
-  Inject,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { SellerOrder, OrderStatus } from '../../database/entities/seller-order.entity';
 import { Product } from '../../database/entities/product.entity';
-import { OrderCreatedEvent } from '../../dto/order-created.event';
-import { RabbitMQConsumer } from '../../messaging/rabbitmq.consumer';
+import { RabbitMQConsumer, PendingOrder } from '../../messaging/rabbitmq.consumer';
 import { RabbitMQProducer } from '../../messaging/rabbitmq.producer';
+import { OrderStatus } from '../../database/entities/seller-order.entity';
+
+export interface OrderActionResult {
+  orderId: string;
+  status: 'CONFIRMED' | 'REJECTED';
+}
 
 @Injectable()
 export class SellerService {
   private readonly logger = new Logger(SellerService.name);
 
   constructor(
-    @InjectRepository(SellerOrder)
-    private readonly sellerOrderRepository: Repository<SellerOrder>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    @Inject(forwardRef(() => RabbitMQConsumer))
     private readonly rabbitMQConsumer: RabbitMQConsumer,
     private readonly rabbitMQProducer: RabbitMQProducer,
   ) {}
 
-  async processOrder(event: OrderCreatedEvent): Promise<SellerOrder> {
-    this.logger.log(`Procesare comandă ${event.orderId}`);
-    const sellerOrder = this.sellerOrderRepository.create({
-      orderId: event.orderId,
-      status: OrderStatus.PENDING,
-      orderItems: event.items,
-    });
-    const saved = await this.sellerOrderRepository.save(sellerOrder);
-    this.logger.log(`Comanda ${event.orderId} salvată ca PENDING cu ${event.items.length} produs(e)`);
-    return saved;
+  // ── Citire din coadă (fără DB) ───────────────────────────────────────────
+
+  /** Returnează comenzile pendinte direct din memoria consumerului */
+  getPendingOrders(): PendingOrder[] {
+    return this.rabbitMQConsumer.getPendingOrders();
   }
 
-  async findAllOrders(): Promise<SellerOrder[]> {
-    return this.sellerOrderRepository.find({ order: { createdAt: 'DESC' } });
+  /** Returnează o singură comandă pendintă după orderId */
+  getOrderById(orderId: string): PendingOrder {
+    const pending = this.rabbitMQConsumer.getPendingOrder(orderId);
+    if (!pending) {
+      throw new NotFoundException(`Comanda ${orderId} nu se află în coada de așteptare`);
+    }
+    return pending;
   }
 
-  async findOrderById(id: string): Promise<SellerOrder> {
-    const order = await this.sellerOrderRepository.findOne({ where: { id } });
-    if (!order) throw new NotFoundException(`Comanda cu id ${id} nu a fost găsită`);
-    return order;
+  // ── Produse (rămân în DB) ────────────────────────────────────────────────
+
+  async findAllProducts(): Promise<Product[]> {
+    return this.productRepository.find({ order: { createdAt: 'DESC' } });
   }
 
-  async confirmOrder(id: string): Promise<SellerOrder> {
-    const order = await this.findOrderById(id);
+  async findProductById(id: string): Promise<Product> {
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) throw new NotFoundException(`Produsul cu id ${id} nu a fost găsit`);
+    return product;
+  }
 
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException(`Comanda ${id} este deja ${order.status} și nu poate fi confirmată`);
+  // ── Acțiuni seller (ACK/NACK + publish) ─────────────────────────────────
+
+  /**
+   * Seller confirmă comanda:
+   * 1. Scade stocul produselor (tranzacție DB)
+   * 2. ACK mesaj RabbitMQ (șters din coadă)
+   * 3. Publică `order.processed` cu status CONFIRMED → order-service actualizează
+   */
+  async confirmOrder(orderId: string): Promise<OrderActionResult> {
+    const pending = this.rabbitMQConsumer.getPendingOrder(orderId);
+    if (!pending) {
+      throw new NotFoundException(
+        `Comanda ${orderId} nu se află în coada de așteptare`,
+      );
     }
 
-    const confirmed = await this.dataSource.transaction('SERIALIZABLE', async (em) => {
-      const productIds = order.orderItems.map((i) => i.productId);
+    const { items } = pending.event;
+
+    // Scade stocul produselor în tranzacție
+    await this.dataSource.transaction('SERIALIZABLE', async (em) => {
+      const productIds = items.map((i) => i.productId);
       const products = await em
         .getRepository(Product)
         .createQueryBuilder('p')
@@ -66,64 +84,50 @@ export class SellerService {
         .whereInIds(productIds)
         .getMany();
 
-      for (const item of order.orderItems) {
+      for (const item of items) {
         const product = products.find((p) => p.id === item.productId);
-        if (!product) throw new NotFoundException(`Produsul ${item.productId} nu a fost găsit`);
-        if (product.quantity < item.quantity) {
-          throw new BadRequestException(
+        if (!product)
+          throw new NotFoundException(`Produsul ${item.productId} nu a fost găsit`);
+        if (product.quantity < item.quantity)
+          throw new Error(
             `Stoc insuficient pentru "${product.name}": solicitat ${item.quantity}, disponibil ${product.quantity}`,
           );
-        }
-      }
-
-      for (const item of order.orderItems) {
-        const product = products.find((p) => p.id === item.productId)!;
         product.quantity -= item.quantity;
         await em.getRepository(Product).save(product);
-        this.logger.log(`Stoc actualizat: "${product.name}" ${product.quantity + item.quantity} → ${product.quantity}`);
+        this.logger.log(`Stoc actualizat: "${product.name}" → ${product.quantity}`);
       }
-
-      order.status = OrderStatus.CONFIRMED;
-      order.processedAt = new Date();
-      return em.getRepository(SellerOrder).save(order);
     });
 
-    this.logger.log(`Comanda ${order.orderId} confirmată`);
+    // ACK — mesajul este șters din coadă
+    this.rabbitMQConsumer.acknowledgeOrder(orderId);
 
-    // ACK mesaj RabbitMQ
-    await this.rabbitMQConsumer.acknowledgeOrder(order.orderId);
+    // Publică răspunsul înapoi → order-service schimbă statusul
+    await this.rabbitMQProducer.publishOrderProcessed({ orderId, status: OrderStatus.CONFIRMED });
 
-    // Publică OrderProcessed → order-service actualizează statusul comenzii
-    await this.rabbitMQProducer.publishOrderProcessed({
-      orderId: order.orderId,
-      status: OrderStatus.CONFIRMED,
-    });
-
-    return confirmed;
+    this.logger.log(`✅ Comanda ${orderId} confirmată și ACK-ată`);
+    return { orderId, status: 'CONFIRMED' };
   }
 
-  async rejectOrder(id: string): Promise<SellerOrder> {
-    const order = await this.findOrderById(id);
-
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException(`Comanda ${id} este deja ${order.status} și nu poate fi respinsă`);
+  /**
+   * Seller respinge comanda:
+   * 1. NACK mesaj RabbitMQ (șters din coadă fără requeue)
+   * 2. Publică `order.processed` cu status REJECTED → order-service actualizează
+   */
+  async rejectOrder(orderId: string): Promise<OrderActionResult> {
+    const pending = this.rabbitMQConsumer.getPendingOrder(orderId);
+    if (!pending) {
+      throw new NotFoundException(
+        `Comanda ${orderId} nu se află în coada de așteptare`,
+      );
     }
 
-    order.status = OrderStatus.REJECTED;
-    order.processedAt = new Date();
-    await this.sellerOrderRepository.save(order);
+    // NACK fără requeue — mesajul este eliminat din coadă
+    this.rabbitMQConsumer.rejectOrder(orderId);
 
-    this.logger.log(`Comanda ${order.orderId} respinsă`);
+    // Publică răspunsul înapoi
+    await this.rabbitMQProducer.publishOrderProcessed({ orderId, status: OrderStatus.REJECTED });
 
-    // NACK mesaj RabbitMQ
-    await this.rabbitMQConsumer.rejectOrder(order.orderId);
-
-    // Publică OrderProcessed → order-service actualizează statusul comenzii
-    await this.rabbitMQProducer.publishOrderProcessed({
-      orderId: order.orderId,
-      status: OrderStatus.REJECTED,
-    });
-
-    return order;
+    this.logger.log(`❌ Comanda ${orderId} respinsă și NACK-ată`);
+    return { orderId, status: 'REJECTED' };
   }
 }
