@@ -7,7 +7,6 @@ import {
 } from 'typeorm'
 
 import { Order } from './order.entity'
-import { Product } from './product.entity'
 
 const moneyToCentsTransformer = {
   to: (value: number) => Math.round(value * 100),
@@ -35,8 +34,4 @@ export class OrderItem {
   @ManyToOne(() => Order, (order) => order.items)
   @JoinColumn({ name: 'order_id' })
   order: Order
-
-  @ManyToOne(() => Product)
-  @JoinColumn({ name: 'product_id' })
-  product: Product
 }

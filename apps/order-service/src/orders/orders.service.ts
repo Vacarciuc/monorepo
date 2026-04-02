@@ -11,9 +11,9 @@ import { CartItem } from '../entities/cart-item.entity'
 import { OrderItem } from '../entities/order-item.entity'
 import { Order, OrderStatus } from '../entities/order.entity'
 import { OutboxEvent, OutboxEventType } from '../entities/outbox-event.entity'
-import { Product } from '../entities/product.entity'
 import { OrderProcessedEvent } from '../events/order.events'
 import { RabbitMQService } from '../rabbitmq/rabbitmq.service'
+import { SellerClientService } from '../seller/seller-client.service'
 
 @Injectable()
 export class OrdersService implements OnModuleInit {
@@ -24,6 +24,7 @@ export class OrdersService implements OnModuleInit {
     private orderItemRepository: Repository<OrderItem>,
     private rabbitMQService: RabbitMQService,
     private dataSource: DataSource,
+    private sellerClientService: SellerClientService,
   ) {}
 
   async onModuleInit() {
@@ -39,14 +40,12 @@ export class OrdersService implements OnModuleInit {
 
     try {
       const cartItemRepo = queryRunner.manager.getRepository(CartItem)
-      const productRepo = queryRunner.manager.getRepository(Product)
       const orderRepo = queryRunner.manager.getRepository(Order)
       const orderItemRepo = queryRunner.manager.getRepository(OrderItem)
       const outboxRepo = queryRunner.manager.getRepository(OutboxEvent)
 
       const cartItems = await cartItemRepo.find({
         where: { user_id: userId },
-        relations: ['product'],
       })
 
       if (cartItems.length === 0) {
@@ -58,43 +57,30 @@ export class OrdersService implements OnModuleInit {
       let sellerId: string | null = null
 
       for (const cartItem of cartItems) {
-        // Lock the product row so stock can't be decremented concurrently.
-        const product = await productRepo
-          .createQueryBuilder('p')
-          .setLock('pessimistic_write')
-          .where('p.id = :id', { id: cartItem.product_id })
-          .getOne()
-
-        if (!product) {
-          throw new NotFoundException(
-            `Product with ID ${cartItem.product_id} not found`,
-          )
-        }
+        // Fetch product from seller-service
+        const product = await this.sellerClientService.getProduct(cartItem.product_id)
 
         if (!sellerId) {
-          sellerId = product.seller_id
-        } else if (sellerId !== product.seller_id) {
+          sellerId = product.sellerId
+        } else if (sellerId !== product.sellerId) {
           throw new BadRequestException(
             'All products must be from the same seller',
           )
         }
 
-        if (product.stock < cartItem.quantity) {
+        if (product.quantity < cartItem.quantity) {
           throw new BadRequestException(
             `Insufficient stock for product ${product.name}`,
           )
         }
 
-        product.stock -= cartItem.quantity
-        await productRepo.save(product)
-
-        const itemPrice = product.price * cartItem.quantity
+        const itemPrice = Number(product.price) * cartItem.quantity
         totalPrice += itemPrice
 
         const orderItem = orderItemRepo.create({
           product_id: product.id,
           quantity: cartItem.quantity,
-          price: product.price,
+          price: Number(product.price),
         })
         orderItems.push(orderItem)
       }
@@ -115,7 +101,7 @@ export class OrdersService implements OnModuleInit {
         orderId: savedOrder.id,
         sellerId: sellerId!,
         items: orderItems.map((item) => ({
-          product_id: item.product_id,
+          productId: item.product_id,
           quantity: item.quantity,
           price: item.price,
         })),
@@ -145,7 +131,7 @@ export class OrdersService implements OnModuleInit {
   async findAll(userId: string): Promise<Order[]> {
     return await this.orderRepository.find({
       where: { user_id: userId },
-      relations: ['items', 'items.product'],
+      relations: ['items'],
       order: { created_at: 'DESC' },
     })
   }
@@ -153,7 +139,7 @@ export class OrdersService implements OnModuleInit {
   async findOne(orderId: string, userId: string): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { id: orderId, user_id: userId },
-      relations: ['items', 'items.product'],
+      relations: ['items'],
     })
 
     if (!order) {

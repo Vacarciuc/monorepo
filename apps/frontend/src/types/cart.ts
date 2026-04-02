@@ -7,11 +7,8 @@ export interface CartItem {
 }
 
 export interface Cart {
-  id: string
   customerId: string
   items: CartItem[]
-  createdAt: string
-  updatedAt: string
 }
 
 export interface CheckoutPayload {

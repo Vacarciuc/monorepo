@@ -184,6 +184,7 @@ services:
       ORDER_SERVICE_DB_PASSWORD: ${ORDER_SERVICE_DB_PASSWORD}
       ORDER_SERVICE_DB_NAME: ${ORDER_SERVICE_DB_NAME}
       RABBITMQ_URL: "amqp://${MQ_USER}:${MQ_PASS}@rabbitmq:5672"
+      SELLER_SERVICE_URL: "http://seller-service:3000"
     init: true
     ports:
       - "3002:3000"

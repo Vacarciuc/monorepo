@@ -2,19 +2,15 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm'
-
-import { Product } from './product.entity'
 
 @Entity('cart_items')
 export class CartItem {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column('uuid')
+  @Column({ type: 'varchar', length: 50 })
   user_id: string
 
   @Column('uuid')
@@ -23,9 +19,6 @@ export class CartItem {
   @Column('int')
   quantity: number
 
-  @ManyToOne(() => Product)
-  @JoinColumn({ name: 'product_id' })
-  product: Product
 
   @CreateDateColumn()
   created_at: Date
