@@ -28,7 +28,7 @@ import {
 import { Public } from '@/auth/auth.decorator'
 import { Role } from '@/auth/auth.decorator'
 import { UserRole } from '@/auth/user-role'
-import { SellerOrderDto } from '@/seller/dto/seller-order.dto'
+import { PendingSellerOrderDto, OrderActionResultDto } from '@/seller/dto/seller-order.dto'
 import {
   CreateSellerProductDto,
   SellerProductDto,
@@ -61,17 +61,17 @@ export class SellerController {
   @Get('orders')
   @Role(UserRole.Seller)
   @ApiOperation({ summary: 'Toate comenzile primite (seller/admin)' })
-  @ApiOkResponse({ type: [SellerOrderDto] })
-  getAllOrders(): Promise<SellerOrderDto[]> {
+  @ApiOkResponse({ type: [PendingSellerOrderDto] })
+  getAllOrders(): Promise<PendingSellerOrderDto[]> {
     return this.sellerService.getAllOrders()
   }
 
   @Get('orders/:id')
   @Role(UserRole.Seller)
   @ApiOperation({ summary: 'Comandă după ID (seller/admin)' })
-  @ApiOkResponse({ type: SellerOrderDto })
+  @ApiOkResponse({ type: PendingSellerOrderDto })
   @ApiNotFoundResponse()
-  getOrderById(@Param('id') id: string): Promise<SellerOrderDto> {
+  getOrderById(@Param('id') id: string): Promise<PendingSellerOrderDto> {
     return this.sellerService.getOrderById(id)
   }
 
@@ -79,9 +79,9 @@ export class SellerController {
   @HttpCode(HttpStatus.OK)
   @Role(UserRole.Seller)
   @ApiOperation({ summary: 'Confirmă o comandă (seller/admin)' })
-  @ApiOkResponse({ type: SellerOrderDto })
+  @ApiOkResponse({ type: OrderActionResultDto })
   @ApiNotFoundResponse()
-  confirmOrder(@Param('id') id: string): Promise<SellerOrderDto> {
+  confirmOrder(@Param('id') id: string): Promise<OrderActionResultDto> {
     return this.sellerService.confirmOrder(id)
   }
 
@@ -89,9 +89,9 @@ export class SellerController {
   @HttpCode(HttpStatus.OK)
   @Role(UserRole.Seller)
   @ApiOperation({ summary: 'Respinge o comandă (seller/admin)' })
-  @ApiOkResponse({ type: SellerOrderDto })
+  @ApiOkResponse({ type: OrderActionResultDto })
   @ApiNotFoundResponse()
-  rejectOrder(@Param('id') id: string): Promise<SellerOrderDto> {
+  rejectOrder(@Param('id') id: string): Promise<OrderActionResultDto> {
     return this.sellerService.rejectOrder(id)
   }
 

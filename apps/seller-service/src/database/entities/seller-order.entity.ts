@@ -49,6 +49,11 @@ export class SellerOrder {
   @Column({ type: 'timestamp', nullable: true })
   processedAt: Date;
 
+  @Column({
+    type: 'jsonb', nullable: false
+  })
+  order: Record<string, unknown>;
+
   @ApiProperty({ description: 'Timestamp when the order was received' })
   @CreateDateColumn()
   createdAt: Date;

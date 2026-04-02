@@ -13,12 +13,6 @@ import { useAuth } from '../context/AuthContext';
 
 type Tab = 'produse' | 'comenzi';
 
-const STATUS_LABELS: Record<SellerOrder['status'], string> = {
-  PENDING: '⏳ În așteptare',
-  CONFIRMED: '✅ Confirmată',
-  REJECTED: '❌ Respinsă',
-};
-
 const SellerPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('produse');
   const [products, setProducts] = useState<Product[]>([]);
@@ -92,10 +86,10 @@ const SellerPage = () => {
   };
 
   const handleConfirmOrder = async (order: SellerOrder) => {
-    setProcessingOrder(order.id);
+    setProcessingOrder(order.orderId);
     try {
       setError('');
-      await confirmSellerOrder(order.id);
+      await confirmSellerOrder(order.orderId);
       setSuccessMessage(`✅ Comanda #${order.orderId.slice(0, 8)} a fost confirmată!`);
       setSelectedOrder(null);
       await fetchOrders();
@@ -109,10 +103,10 @@ const SellerPage = () => {
 
   const handleRejectOrder = async (order: SellerOrder) => {
     if (!confirm('Ești sigur că vrei să respingi această comandă?')) return;
-    setProcessingOrder(order.id);
+    setProcessingOrder(order.orderId);
     try {
       setError('');
-      await rejectSellerOrder(order.id);
+      await rejectSellerOrder(order.orderId);
       setSuccessMessage(`Comanda #${order.orderId.slice(0, 8)} a fost respinsă.`);
       setSelectedOrder(null);
       await fetchOrders();
@@ -130,7 +124,8 @@ const SellerPage = () => {
       hour: '2-digit', minute: '2-digit',
     }) : '—';
 
-  const pendingCount = orders.filter((o) => o.status === 'PENDING').length;
+  // All orders from the queue are pending (unacknowledged)
+  const pendingCount = orders.length;
 
   return (
     <div className="page-container">
@@ -210,31 +205,27 @@ const SellerPage = () => {
             {loading ? (
               <div className="loading">Se încarcă comenzile...</div>
             ) : orders.length === 0 ? (
-              <div className="empty-state"><p>Nu există comenzi încă.</p></div>
+              <div className="empty-state"><p>Nu există comenzi în așteptare.</p></div>
             ) : (
               <div className="orders-list">
                 {orders.map((order) => (
                   <div
-                    key={order.id}
-                    className={`order-card order-card--seller order-card--${order.status.toLowerCase()}`}
-                    onClick={() => order.status === 'PENDING' && setSelectedOrder(order)}
-                    style={{ cursor: order.status === 'PENDING' ? 'pointer' : 'default' }}
+                    key={order.orderId}
+                    className="order-card order-card--seller order-card--pending"
+                    onClick={() => setSelectedOrder(order)}
+                    style={{ cursor: 'pointer' }}
                   >
                     <div className="order-card-header">
                       <div className="order-card-left">
                         <span className="order-id">#{order.orderId.slice(0, 8)}</span>
-                        <span className="order-date">{formatDate(order.createdAt)}</span>
+                        <span className="order-date">{formatDate(order.receivedAt)}</span>
                       </div>
                       <div className="order-card-right">
-                        <span className={`order-status status-${order.status.toLowerCase()}`}>
-                          {STATUS_LABELS[order.status]}
-                        </span>
+                        <span className="order-status status-pending">⏳ În așteptare</span>
                         <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>
-                          {order.orderItems.length} produs{order.orderItems.length !== 1 ? 'e' : ''}
+                          {order.items.length} produs{order.items.length !== 1 ? 'e' : ''}
                         </span>
-                        {order.status === 'PENDING' && (
-                          <span className="seller-order-action-hint">👆 Click pentru acțiuni</span>
-                        )}
+                        <span className="seller-order-action-hint">👆 Click pentru acțiuni</span>
                       </div>
                     </div>
                   </div>
@@ -256,13 +247,10 @@ const SellerPage = () => {
 
             <div className="modal-body">
               <p className="modal-meta">
-                <strong>Primit la:</strong> {formatDate(selectedOrder.createdAt)}
+                <strong>Primit la:</strong> {formatDate(selectedOrder.receivedAt)}
               </p>
               <p className="modal-meta">
-                <strong>Status:</strong>{' '}
-                <span className={`order-status status-${selectedOrder.status.toLowerCase()}`}>
-                  {STATUS_LABELS[selectedOrder.status]}
-                </span>
+                <strong>Total:</strong> {selectedOrder.totalPrice.toFixed(2)} MDL
               </p>
 
               <h3 className="modal-section-title">Produse comandate</h3>
@@ -276,7 +264,7 @@ const SellerPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedOrder.orderItems.map((item, i) => (
+                  {selectedOrder.items.map((item, i) => (
                     <tr key={i}>
                       <td style={{ fontSize: '0.8rem', opacity: 0.7 }}>{item.productId.slice(0, 12)}…</td>
                       <td>{item.quantity}</td>
@@ -290,7 +278,7 @@ const SellerPage = () => {
                     <td colSpan={3}><strong>Total</strong></td>
                     <td>
                       <strong>
-                        {selectedOrder.orderItems.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)} MDL
+                        {selectedOrder.items.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)} MDL
                       </strong>
                     </td>
                   </tr>
@@ -298,24 +286,22 @@ const SellerPage = () => {
               </table>
             </div>
 
-            {selectedOrder.status === 'PENDING' && (
-              <div className="modal-footer">
-                <button
-                  className="add-product-button"
-                  disabled={processingOrder === selectedOrder.id}
-                  onClick={() => handleConfirmOrder(selectedOrder)}
-                >
-                  ✅ Confirmă Comanda
-                </button>
-                <button
-                  className="delete-button"
-                  disabled={processingOrder === selectedOrder.id}
-                  onClick={() => handleRejectOrder(selectedOrder)}
-                >
-                  ❌ Respinge Comanda
-                </button>
-              </div>
-            )}
+            <div className="modal-footer">
+              <button
+                className="add-product-button"
+                disabled={processingOrder === selectedOrder.orderId}
+                onClick={() => handleConfirmOrder(selectedOrder)}
+              >
+                {processingOrder === selectedOrder.orderId ? '⏳ Se procesează...' : '✅ Confirmă Comanda'}
+              </button>
+              <button
+                className="delete-button"
+                disabled={processingOrder === selectedOrder.orderId}
+                onClick={() => handleRejectOrder(selectedOrder)}
+              >
+                {processingOrder === selectedOrder.orderId ? '⏳ Se procesează...' : '❌ Respinge Comanda'}
+              </button>
+            </div>
           </div>
         </div>
       )}
