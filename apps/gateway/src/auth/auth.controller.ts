@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common'
 import {
   ApiBadRequestResponse,
@@ -45,7 +46,9 @@ export class AuthController {
   @ApiOperation({})
   @ApiOkResponse({ type: String, description: 'Token JWT' })
   @ApiConflictResponse()
-  async register(@Body() dto: RegisterDto): ReturnType<AuthService['register']> {
+  async register(
+    @Body() dto: RegisterDto,
+  ): ReturnType<AuthService['register']> {
     return this.authService.register(dto)
   }
 
@@ -54,6 +57,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Date utilizator autentificat' })
   @ApiOkResponse({ type: String })
   async getSelf(@Req() req: Request): ReturnType<AuthService['getSelf']> {
+    if (!req.headers.authorization) {
+      throw new UnauthorizedException()
+    }
     const token = req.headers.authorization!.split(' ')[1]!
     return this.authService.getSelf(token)
   }
